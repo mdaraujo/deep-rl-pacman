@@ -161,7 +161,9 @@ class Game:
 
     async def next_frame(self):
         await asyncio.sleep(1./GAME_SPEED)
+        self.compute_next_frame()
 
+    def compute_next_frame(self):
         if not self._running:
             logger.info("Waiting for player 1")
             return
