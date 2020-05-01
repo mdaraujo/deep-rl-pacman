@@ -17,3 +17,6 @@ pytest==3.8.2
 six==1.11.0
 websockets==6.0
 yarl==1.2.6
+gym==0.17.1
+tensorflow-gpu==1.14.0
+stable-baselines==2.10.0
