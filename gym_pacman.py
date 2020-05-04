@@ -3,6 +3,7 @@ import json
 import numpy as np
 import gym
 
+from colorama import Back, Style
 from stable_baselines.common.env_checker import check_env
 
 from game import Game
@@ -10,24 +11,26 @@ from game import Game
 
 class PacmanObservation:
 
-    EMPTY = 0
-    WALL = 1
-    PACMAN = 2
-    GHOST = 3
-    ENERGY = 4
-    BOOST = 5
+    WALL = 0
+    GHOST = 42
+    PACMAN = 84
+    EMPTY = 126
+    ENERGY = 168
+    BOOST = 210
+    GHOST_ZOMBIE = 255
 
     def __init__(self, game_map):
         self.map = game_map
 
-        self.shape = self.map.ver_tiles, self.map.hor_tiles
+        # First dimension is for the image channels required by tf.nn.conv2d
+        self.shape = (1, self.map.ver_tiles, self.map.hor_tiles)
 
-        self.base_obs = np.zeros(self.shape, dtype=np.uint8)
+        self.base_obs = np.full(self.shape, self.EMPTY, dtype=np.uint8)
 
         for y in range(self.map.ver_tiles):
             for x in range(self.map.hor_tiles):
                 if self.map.is_wall((x, y)):
-                    self.base_obs[y][x] = self.WALL
+                    self.base_obs[0][y][x] = self.WALL
 
         self.current_obs = None
 
@@ -35,24 +38,27 @@ class PacmanObservation:
 
         self.current_obs = np.copy(self.base_obs)
 
-        x, y = game_state['pacman']
+        for x, y in game_state['energy']:
+            self.current_obs[0][y][x] = self.ENERGY
 
-        self.current_obs[y][x] = self.PACMAN
+        for x, y in game_state['boost']:
+            self.current_obs[0][y][x] = self.BOOST
 
         for ghost in game_state['ghosts']:
             x, y = ghost[0]
-            self.current_obs[y][x] = self.GHOST
 
-        for x, y in game_state['energy']:
-            self.current_obs[y][x] = self.ENERGY
+            if ghost[1]:
+                self.current_obs[0][y][x] = self.GHOST_ZOMBIE
+            else:
+                self.current_obs[0][y][x] = self.GHOST
 
-        for x, y in game_state['boost']:
-            self.current_obs[y][x] = self.BOOST
+        x, y = game_state['pacman']
+        self.current_obs[0][y][x] = self.PACMAN
 
         return self.current_obs
 
     def get_space(self):
-        return gym.spaces.Box(low=self.EMPTY, high=self.BOOST, shape=self.shape, dtype=np.uint8)
+        return gym.spaces.Box(low=0, high=255, shape=self.shape, dtype=np.uint8)
 
 
 class PacmanEnv(gym.Env):
@@ -105,7 +111,28 @@ class PacmanEnv(gym.Env):
         return self._pacman_obs.get_obs(game_state)
 
     def render(self, mode='human'):
-        print(self._pacman_obs.current_obs)
+        for y in range(self._game.map.ver_tiles):
+            for x in range(self._game.map.hor_tiles):
+                color = None
+                value = self._pacman_obs.current_obs[0][y][x]
+
+                if value == PacmanObservation.PACMAN:
+                    color = Back.YELLOW
+                elif value == PacmanObservation.GHOST:
+                    color = Back.MAGENTA
+                elif value == PacmanObservation.GHOST_ZOMBIE:
+                    color = Back.BLUE
+                elif value == PacmanObservation.EMPTY:
+                    color = Back.BLACK
+                elif value == PacmanObservation.WALL:
+                    color = Back.WHITE
+                elif value == PacmanObservation.ENERGY:
+                    color = Back.RED
+                elif value == PacmanObservation.BOOST:
+                    color = Back.CYAN
+
+                print(color, ' ', end='')
+            print(Style.RESET_ALL)
 
 
 def main():
@@ -140,7 +167,7 @@ def main():
     while not done:
         env.render()
 
-        y_arr, x_arr = np.where(obs == PacmanObservation.PACMAN)
+        y_arr, x_arr = np.where(obs[0] == PacmanObservation.PACMAN)
         y, x = y_arr[0], x_arr[0]
 
         # Using agent from client example
@@ -159,7 +186,16 @@ def main():
         print("info:", info)
         print()
 
+        # # Stop game for debugging
+
         # if reward > 0:
+        #     env.render()
+        #     print("Received positive reward.")
+        #     break
+
+        # if np.isin(PacmanObservation.GHOST_ZOMBIE, obs[0]):
+        #     env.render()
+        #     print("Zombie")
         #     break
 
 
