@@ -1,6 +1,7 @@
 import os
 import argparse
 import time
+import json
 import numpy as np
 
 from stable_baselines.common.evaluation import evaluate_policy
@@ -13,8 +14,6 @@ def main():
     parser = argparse.ArgumentParser(description='Test a model inside a directory.')
     parser.add_argument("logdir",
                         help="log directory")
-    parser.add_argument("-a", "--alg", type=str, default="DQN",
-                        help="Algorithm name. PPO or DQN (default: DQN)")
     parser.add_argument("-l", "--latest", action="store_true",
                         help="Use latest dir inside 'logdir' (default: run for 'logdir')")
     parser.add_argument('-m', '--model_name', type=str, default="best_model",
@@ -23,7 +22,7 @@ def main():
                         help="Number of evaluation episodes. (default: 30)")
     parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
     parser.add_argument("--ghosts", help="Number of ghosts", type=int, default=1)
-    parser.add_argument("--level", help="difficulty level of ghosts", choices=['0', '1', '2', '3'], default='1')
+    parser.add_argument("--level", help="difficulty level of ghosts", choices=[0, 1, 2, 3], default=1)
     parser.add_argument("--lives", help="Number of lives", type=int, default=3)
     parser.add_argument("--timeout", help="Timeout after this amount of steps", type=int, default=3000)
     args = parser.parse_args()
@@ -36,15 +35,18 @@ def main():
     if args.latest:
         log_dir = sorted(all_subdirs)[-1]
 
+    with open(os.path.join(log_dir, "params.json"), "r") as f:
+        params = json.load(f)
+
     filter_tf_warnings()
 
-    alg = get_alg(args.alg)
+    alg = get_alg(params['alg'])
 
     print("\nUsing {} model at dir {}".format(args.model_name, log_dir))
 
     model = alg.load(os.path.join(log_dir, args.model_name))
 
-    env = PacmanEnv(args.alg, args.map, args.ghosts, int(args.level), args.lives, args.timeout)
+    env = PacmanEnv(params['agent_name'], args.map, args.ghosts, args.level, args.lives, args.timeout)
 
     eval_start_time = time.time()
 

@@ -47,8 +47,6 @@ def main():
     parser = argparse.ArgumentParser(description='Test a model inside a directory.')
     parser.add_argument("logdir",
                         help="log directory")
-    parser.add_argument("-a", "--alg", type=str, default="DQN",
-                        help="Algorithm name. PPO or DQN (default: DQN)")
     parser.add_argument("-l", "--latest", action="store_true",
                         help="Use latest dir inside 'logdir' (default: run for 'logdir')")
     parser.add_argument('-m', '--model_name', type=str, default="best_model",
@@ -63,9 +61,12 @@ def main():
     if args.latest:
         log_dir = sorted(all_subdirs)[-1]
 
+    with open(os.path.join(log_dir, "params.json"), "r") as f:
+        params = json.load(f)
+
     filter_tf_warnings()
 
-    alg = get_alg(args.alg)
+    alg = get_alg(params['alg'])
 
     print("\nUsing {} model at dir {}".format(args.model_name, log_dir))
 
@@ -76,7 +77,7 @@ def main():
     SERVER = os.environ.get('SERVER', 'localhost')
     PORT = os.environ.get('PORT', '8000')
 
-    loop.run_until_complete(agent_loop(model, args.alg, "{}:{}".format(SERVER, PORT)))
+    loop.run_until_complete(agent_loop(model, params['agent_name'], "{}:{}".format(SERVER, PORT)))
 
 
 if __name__ == "__main__":

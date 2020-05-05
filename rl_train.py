@@ -34,7 +34,7 @@ if __name__ == "__main__":
     eval_freq = args.eval_freq
 
     if not eval_freq:
-        eval_freq = args.timesteps / 10
+        eval_freq = int(args.timesteps / 10)
 
     now = datetime.now()
 
