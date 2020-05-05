@@ -1,12 +1,11 @@
 import os
 import time
-import csv
 import numpy as np
 
 from tqdm.auto import tqdm
 from stable_baselines.common.callbacks import EvalCallback
 
-from rl_utils.utils import get_elapsed_time
+from rl_utils.utils import get_elapsed_time, write_rows, EVAL_HEADER
 
 
 class PlotEvalSaveCallback(EvalCallback):
@@ -60,17 +59,15 @@ class PlotEvalSaveCallback(EvalCallback):
             self.std_ep_lengths.append(std_ep_length)
             self.evals_elapsed_time.append(eval_elapsed_time)
 
-            header = ["TrainStep", "MeanReward", "StdReward", "MaxReward", "MinReward",
-                      "MeanEpLength", "StdEpLength", "EvaluationTime"]
+            eval_episodes = [self.n_eval_episodes for _ in range(len(self.mean_rewards))]
 
             rows = zip(self.train_steps, self.mean_rewards, self.std_rewards,
                        self.max_rewards, self.min_rewards,
-                       self.mean_ep_lengths, self.std_ep_lengths, self.evals_elapsed_time)
+                       self.mean_ep_lengths, self.std_ep_lengths,
+                       self.evals_elapsed_time, eval_episodes)
 
-            with open(os.path.join(self.log_dir, 'evaluations.csv'), 'w') as f:
-                writer = csv.writer(f)
-                writer.writerow(header)
-                writer.writerows(rows)
+            write_rows(os.path.join(self.log_dir, 'evaluations.csv'),
+                       rows, EVAL_HEADER)
 
         return True
 

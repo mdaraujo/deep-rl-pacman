@@ -2,10 +2,27 @@ import warnings
 import os
 import logging
 import datetime
+import csv
 
 from stable_baselines import PPO2, DQN
 
 FIG_SIZE = (10, 5)
+
+EVAL_HEADER = ["TrainStep", "MeanReward", "StdReward", "MaxReward", "MinReward",
+               "MeanEpLength", "StdEpLength", "EvaluationTime", "EvaluationEpisodes"]
+
+
+def write_rows(outfile, rows, header, mode='w'):
+
+    file_exists = os.path.isfile(outfile)
+
+    with open(outfile, mode) as f:
+        writer = csv.writer(f)
+
+        if mode == 'w' or not file_exists:
+            writer.writerow(header)
+
+        writer.writerows(rows)
 
 
 def get_alg(alg_name):
