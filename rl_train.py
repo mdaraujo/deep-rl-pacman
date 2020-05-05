@@ -18,8 +18,8 @@ if __name__ == "__main__":
                         help="Total timesteps (default: 20000)")
     parser.add_argument("-f", "--eval_freq", type=int, default=None,
                         help="Number of callback calls between evaluations. (default: timesteps/10)")
-    parser.add_argument("-e", "--eval_episodes", type=int, default=10,
-                        help="Number of evaluation episodes. (default: 10)")
+    parser.add_argument("-e", "--eval_episodes", type=int, default=30,
+                        help="Number of evaluation episodes. (default: 30)")
     parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
     parser.add_argument("--ghosts", help="Number of ghosts", type=int, default=1)
     parser.add_argument("--level", help="difficulty level of ghosts", choices=['0', '1', '2', '3'], default='1')
