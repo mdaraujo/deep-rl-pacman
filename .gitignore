@@ -1,3 +1,4 @@
+agent.id
 logs*
 *.sh
 *.score

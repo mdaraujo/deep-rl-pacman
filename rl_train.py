@@ -11,6 +11,8 @@ from rl_utils.utils import get_alg, filter_tf_warnings
 from rl_utils.callbacks import PlotEvalSaveCallback
 from rl_utils.cnn_extractor import pacman_cnn
 
+LOGS_BASE_DIR = 'logs'
+AGENT_ID_FILE = 'agent.id'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -38,13 +40,27 @@ if __name__ == "__main__":
 
     alg_name = args.alg
 
-    log_dir = "logs/{}_{}/".format(now.strftime('%y%m%d-%H%M%S'), alg_name)
+    agent_id = 1
+
+    if os.path.isfile(AGENT_ID_FILE):
+        with open(AGENT_ID_FILE, 'r') as f:
+            agent_id = int(f.read())
+
+    agent_name = alg_name + '_' + str(agent_id)
+
+    with open(AGENT_ID_FILE, 'w') as f:
+        f.write(str(agent_id + 1))
+
+    dir_name = "{}_{}".format(now.strftime('%y%m%d-%H%M%S'), agent_name)
+
+    log_dir = os.path.join(LOGS_BASE_DIR, dir_name)
 
     os.makedirs(log_dir, exist_ok=True)
 
     print("\nLog dir:", log_dir)
 
     params = OrderedDict()
+    params['agent_name'] = agent_name
     params['alg'] = alg_name
     params['timesteps'] = args.timesteps
     params['eval_freq'] = eval_freq
@@ -59,7 +75,7 @@ if __name__ == "__main__":
     with open(os.path.join(log_dir, "params.json"), "w") as f:
         json.dump(params, f, indent=4)
 
-    env = PacmanEnv(alg_name, args.map, args.ghosts, args.level, args.lives, args.timeout)
+    env = PacmanEnv(agent_name, args.map, args.ghosts, args.level, args.lives, args.timeout)
     env = Monitor(env, filename=log_dir)
 
     filter_tf_warnings()
@@ -79,7 +95,7 @@ if __name__ == "__main__":
         model = alg("CnnPolicy", env, policy_kwargs=policy_kwargs,
                     tensorboard_log=tensorboard_log, verbose=0)
 
-    eval_env = PacmanEnv(alg_name, args.map, args.ghosts, int(args.level), args.lives, args.timeout)
+    eval_env = PacmanEnv(agent_name, args.map, args.ghosts, int(args.level), args.lives, args.timeout)
 
     eval_callback = PlotEvalSaveCallback(eval_env, n_eval_episodes=args.eval_episodes,
                                          eval_freq=eval_freq,
