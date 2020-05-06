@@ -24,6 +24,8 @@ if __name__ == "__main__":
                         help="Number of callback calls between evaluations. (default: timesteps/10)")
     parser.add_argument("-e", "--eval_episodes", type=int, default=30,
                         help="Number of evaluation episodes. (default: 30)")
+    parser.add_argument("-tb", "--tensorboard", default=None,
+                        help="Tensorboard logdir. (default: None)")
     parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
     parser.add_argument("--ghosts", help="Number of ghosts", type=int, default=1)
     parser.add_argument("--level", help="difficulty level of ghosts", choices=[0, 1, 2, 3], default=1)
@@ -80,20 +82,16 @@ if __name__ == "__main__":
 
     filter_tf_warnings()
 
-    policy_kwargs = {'cnn_extractor': pacman_cnn, 'data_format': 'NCHW', 'pad': 'SAME'}
+    policy_kwargs = {'cnn_extractor': pacman_cnn, 'data_format': 'NCHW'}
 
     alg = get_alg(alg_name)
 
-    tensorboard_log = None
-
-    # tensorboard_log = "./logs_tb"
-
     if alg_name == "DQN":
         model = alg("CnnPolicy", env, policy_kwargs=policy_kwargs, prioritized_replay=True,
-                    tensorboard_log=tensorboard_log, verbose=0)
+                    tensorboard_log=args.tensorboard, verbose=0)
     elif alg_name == "PPO":
         model = alg("CnnPolicy", env, policy_kwargs=policy_kwargs,
-                    tensorboard_log=tensorboard_log, verbose=0)
+                    tensorboard_log=args.tensorboard, verbose=0)
 
     eval_env = PacmanEnv(agent_name, args.map, args.ghosts, int(args.level), args.lives, args.timeout)
 
@@ -102,4 +100,4 @@ if __name__ == "__main__":
                                          log_dir=log_dir, deterministic=True)
 
     with eval_callback:
-        model.learn(total_timesteps=args.timesteps, callback=eval_callback)
+        model.learn(total_timesteps=args.timesteps, callback=eval_callback, tb_log_name=agent_name)
