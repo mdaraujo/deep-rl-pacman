@@ -11,13 +11,13 @@ from game import Game
 
 class PacmanObservation:
 
-    WALL = 0
-    GHOST = 42
-    PACMAN = 84
-    EMPTY = 126
-    ENERGY = 168
-    BOOST = 210
-    GHOST_ZOMBIE = 255
+    GHOST = 0
+    WALL = 42
+    EMPTY = 84
+    ENERGY = 126
+    BOOST = 168
+    GHOST_ZOMBIE = 210
+    PACMAN = 255
 
     def __init__(self, game_map):
         self.map = game_map
