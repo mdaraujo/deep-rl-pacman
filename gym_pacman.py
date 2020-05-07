@@ -6,7 +6,7 @@ import gym
 from colorama import Back, Style
 from stable_baselines.common.env_checker import check_env
 
-from game import Game
+from game import Game, TIME_BONUS_STEPS
 
 
 class PacmanObservation:
@@ -94,6 +94,11 @@ class PacmanEnv(gym.Env):
         game_state = json.loads(self._game.state)
 
         reward = game_state['score'] - self._current_score
+
+        reward -= 1.0 / TIME_BONUS_STEPS
+
+        if game_state['lives'] == 0:
+            reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
 
         self._current_score = game_state['score']
 
