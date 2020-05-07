@@ -78,7 +78,7 @@ if __name__ == "__main__":
         json.dump(params, f, indent=4)
 
     env = PacmanEnv(agent_name, args.map, args.ghosts, args.level, args.lives, args.timeout)
-    env = Monitor(env, filename=log_dir)
+    env = Monitor(env, filename=log_dir, info_keywords=('score', ))
 
     filter_tf_warnings()
 
