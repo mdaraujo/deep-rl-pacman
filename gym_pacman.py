@@ -6,7 +6,7 @@ import gym
 from colorama import Back, Style
 from stable_baselines.common.env_checker import check_env
 
-from game import Game, TIME_BONUS_STEPS
+from game import Game, TIME_BONUS_STEPS, POINT_ENERGY
 
 
 class PacmanObservation:
@@ -105,6 +105,9 @@ class PacmanEnv(gym.Env):
         info = {k: game_state[k] for k in self.info_keywords if k in game_state}
 
         done = not self._game.running
+
+        if done and game_state['lives'] > 0:
+            reward = POINT_ENERGY
 
         return self._pacman_obs.get_obs(game_state), reward, done, info
 
