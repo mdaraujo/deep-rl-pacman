@@ -6,7 +6,7 @@ import gym
 from stable_baselines.common.env_checker import check_env
 
 from game import Game, TIME_BONUS_STEPS, POINT_ENERGY
-from gym_observations import PacmanObservation
+from gym_observations import SingleChannelObs
 
 
 class PacmanEnv(gym.Env):
@@ -23,9 +23,9 @@ class PacmanEnv(gym.Env):
 
         self._game = Game(mapfile, ghosts, level_ghosts, lives, timeout)
 
-        self._pacman_obs = PacmanObservation(self._game.map)
+        self._pacman_obs = SingleChannelObs(self._game.map)
 
-        self.observation_space = self._pacman_obs.get_space()
+        self.observation_space = self._pacman_obs.space
 
         self.action_space = gym.spaces.Discrete(len(self.keys))
 
@@ -103,7 +103,7 @@ def main():
     while not done:
         env.render()
 
-        y_arr, x_arr = np.where(obs[0] == PacmanObservation.PACMAN)
+        y_arr, x_arr = np.where(obs[0] == SingleChannelObs.PACMAN)
         y, x = y_arr[0], x_arr[0]
 
         # Using agent from client example

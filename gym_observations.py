@@ -1,10 +1,30 @@
+from abc import ABC, abstractmethod
 import numpy as np
 import gym
 
 from colorama import Back, Style
 
 
-class PacmanObservation:
+class PacmanObservation(ABC):
+
+    def __init__(self, game_map):
+        self._map = game_map
+        self._shape = None
+
+    @property
+    def space(self):
+        return gym.spaces.Box(low=0, high=255, shape=self._shape, dtype=np.uint8)
+
+    @abstractmethod
+    def get_obs(self, game_state):
+        pass
+
+    @abstractmethod
+    def render(self):
+        pass
+
+
+class SingleChannelObs(PacmanObservation):
 
     GHOST = 0
     WALL = 42
@@ -15,16 +35,16 @@ class PacmanObservation:
     PACMAN = 255
 
     def __init__(self, game_map):
-        self.map = game_map
+        super().__init__(game_map)
 
         # First dimension is for the image channels required by tf.nn.conv2d
-        self.shape = (1, self.map.ver_tiles, self.map.hor_tiles)
+        self._shape = (1, self._map.ver_tiles, self._map.hor_tiles)
 
-        self.base_obs = np.full(self.shape, self.EMPTY, dtype=np.uint8)
+        self.base_obs = np.full(self._shape, self.EMPTY, dtype=np.uint8)
 
-        for y in range(self.map.ver_tiles):
-            for x in range(self.map.hor_tiles):
-                if self.map.is_wall((x, y)):
+        for y in range(self._map.ver_tiles):
+            for x in range(self._map.hor_tiles):
+                if self._map.is_wall((x, y)):
                     self.base_obs[0][y][x] = self.WALL
 
         self.current_obs = None
@@ -52,28 +72,25 @@ class PacmanObservation:
 
         return self.current_obs
 
-    def get_space(self):
-        return gym.spaces.Box(low=0, high=255, shape=self.shape, dtype=np.uint8)
-
     def render(self):
-        for y in range(self.map.ver_tiles):
-            for x in range(self.map.hor_tiles):
+        for y in range(self._map.ver_tiles):
+            for x in range(self._map.hor_tiles):
                 color = None
                 value = self.current_obs[0][y][x]
 
-                if value == PacmanObservation.PACMAN:
+                if value == self.PACMAN:
                     color = Back.YELLOW
-                elif value == PacmanObservation.GHOST:
+                elif value == self.GHOST:
                     color = Back.MAGENTA
-                elif value == PacmanObservation.GHOST_ZOMBIE:
+                elif value == self.GHOST_ZOMBIE:
                     color = Back.BLUE
-                elif value == PacmanObservation.EMPTY:
+                elif value == self.EMPTY:
                     color = Back.BLACK
-                elif value == PacmanObservation.WALL:
+                elif value == self.WALL:
                     color = Back.WHITE
-                elif value == PacmanObservation.ENERGY:
+                elif value == self.ENERGY:
                     color = Back.RED
-                elif value == PacmanObservation.BOOST:
+                elif value == self.BOOST:
                     color = Back.CYAN
 
                 print(color, ' ', end='')
