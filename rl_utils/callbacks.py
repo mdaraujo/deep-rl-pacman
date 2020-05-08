@@ -1,7 +1,8 @@
 import os
 import time
+import json
+from collections import OrderedDict
 import numpy as np
-
 from tqdm.auto import tqdm
 from stable_baselines.common.callbacks import EvalCallback
 
@@ -76,11 +77,22 @@ class PlotEvalSaveCallback(EvalCallback):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
 
-        self.model.save(os.path.join(self.log_dir, 'last_model'))
+        self.model.save(os.path.join(self.log_dir, 'end_model'))
+
+        best_train_step_index = self.mean_rewards.index(self.best_mean_reward)
+        best_train_step = self.train_steps[best_train_step_index]
 
         _, elapsed_time = get_elapsed_time(time.time(), self.start_time)
 
-        print("\nbest_mean_reward:", self.best_mean_reward)
-        print("elapsed_time:", elapsed_time)
+        train_logs = OrderedDict()
+        train_logs['end_train_step'] = self.num_timesteps
+        train_logs['best_train_step'] = best_train_step
+        train_logs['best_mean_reward'] = round(float(self.best_mean_reward), 2)
+        train_logs['last_eval_train_step'] = self.train_steps[-1]
+        train_logs['last_eval_mean_reward'] = round(float(self.mean_rewards[-1]), 2)
+        train_logs['elapsed_time'] = elapsed_time
+
+        with open(os.path.join(self.log_dir, "train_logs.json"), "w") as f:
+            json.dump(train_logs, f, indent=4)
 
         self.pbar.close()
