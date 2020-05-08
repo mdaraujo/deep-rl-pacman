@@ -3,6 +3,7 @@ import os
 import logging
 import datetime
 import csv
+import numpy as np
 
 from stable_baselines import PPO2, DQN
 
@@ -22,7 +23,9 @@ def write_rows(outfile, rows, header, mode='w'):
         if mode == 'w' or not file_exists:
             writer.writerow(header)
 
-        writer.writerows(rows)
+        for row in rows:
+            new_row = [format(x, '.1f') if isinstance(x, float) or isinstance(x, np.float32) else x for x in row]
+            writer.writerow(new_row)
 
 
 def get_alg(alg_name):
