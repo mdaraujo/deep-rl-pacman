@@ -54,7 +54,8 @@ class PacmanEnv(gym.Env):
 
         done = not self._game.running
 
-        if done and game_state['lives'] > 0:
+        if done and self._game._timeout != game_state['step'] and game_state['lives'] > 0:
+            print(" -- WIN -- ")
             reward = POINT_ENERGY
 
         return self._pacman_obs.get_obs(game_state), reward, done, info
@@ -138,13 +139,13 @@ def main():
         #     print("Received positive reward.")
         #     break
 
-        if (obs_type == SingleChannelObs and
-            np.isin(SingleChannelObs.GHOST_ZOMBIE, obs[0])) \
-                or (obs_type == MultiChannelObs and
-                    np.isin(MultiChannelObs.GHOST_ZOMBIE, obs[MultiChannelObs.GHOST_CH])):
-            env.render()
-            print("Zombie")
-            break
+        # if (obs_type == SingleChannelObs and
+        #     np.isin(SingleChannelObs.GHOST_ZOMBIE, obs[0])) \
+        #         or (obs_type == MultiChannelObs and
+        #             np.isin(MultiChannelObs.GHOST_ZOMBIE, obs[MultiChannelObs.GHOST_CH])):
+        #     env.render()
+        #     print("Zombie")
+        #     break
 
     print("score:", sum_rewards + (env._game._timeout / TIME_BONUS_STEPS))
 
