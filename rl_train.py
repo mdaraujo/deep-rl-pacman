@@ -61,7 +61,7 @@ if __name__ == "__main__":
     if args.single_channel_obs:
         obs_type = SingleChannelObs
 
-    dir_name = "{}_{}".format(now.strftime('%y%m%d-%H%M%S'), agent_name)
+    dir_name = "{}_{}_{}".format(agent_id, alg_name, now.strftime('%y%m%d-%H%M%S'))
 
     log_dir = os.path.join(LOGS_BASE_DIR, dir_name)
 
