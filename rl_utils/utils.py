@@ -24,7 +24,7 @@ def write_rows(outfile, rows, header, mode='w'):
             writer.writerow(header)
 
         for row in rows:
-            new_row = [format(x, '.1f') if isinstance(x, float) or isinstance(x, np.float32) else x for x in row]
+            new_row = [format(x, '5.1f') if isinstance(x, float) or isinstance(x, np.float32) else x for x in row]
             writer.writerow(new_row)
 
 
