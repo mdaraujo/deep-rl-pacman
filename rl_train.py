@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
     eval_callback = PlotEvalSaveCallback(eval_env, n_eval_episodes=args.eval_episodes,
                                          eval_freq=eval_freq,
-                                         log_dir=log_dir, deterministic=True)
+                                         log_dir=log_dir, deterministic=False)
 
     with eval_callback:
         model.learn(total_timesteps=args.timesteps, callback=eval_callback, tb_log_name=agent_name)

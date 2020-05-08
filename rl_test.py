@@ -60,7 +60,7 @@ def main():
 
     episode_rewards, episode_lengths = evaluate_policy(model, env,
                                                        n_eval_episodes=args.eval_episodes,
-                                                       deterministic=True,
+                                                       deterministic=False,
                                                        return_episode_rewards=True)
 
     _, eval_elapsed_time = get_elapsed_time(time.time(), eval_start_time)

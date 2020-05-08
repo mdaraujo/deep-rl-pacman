@@ -37,7 +37,7 @@ async def agent_loop(model, obs_type, agent_name, server_address="localhost:8000
 
             obs = pacman_obs.get_obs(state)
 
-            action, _states = model.predict(obs)
+            action, _states = model.predict(obs, deterministic=False)
 
             key = keys[action]
 
