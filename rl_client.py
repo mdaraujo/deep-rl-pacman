@@ -5,11 +5,12 @@ import asyncio
 import websockets
 
 from mapa import Map
-from gym_pacman import PacmanEnv, PacmanObservation
+from gym_pacman import PacmanEnv
+from gym_observations import SingleChannelObs, MultiChannelObs
 from rl_utils.utils import get_alg, filter_tf_warnings
 
 
-async def agent_loop(model, agent_name, server_address="localhost:8000"):
+async def agent_loop(model, obs_type, agent_name, server_address="localhost:8000"):
     async with websockets.connect("ws://{}/player".format(server_address)) as websocket:
 
         # Receive information about static game properties
@@ -22,7 +23,7 @@ async def agent_loop(model, agent_name, server_address="localhost:8000"):
 
         game_map = Map(game_properties['map'])
 
-        pacman_obs = PacmanObservation(game_map)
+        pacman_obs = obs_type(game_map)
 
         keys = PacmanEnv.keys
 
@@ -68,6 +69,13 @@ def main():
 
     alg = get_alg(params['alg'])
 
+    if params['obs_type'] == SingleChannelObs.__name__:
+        obs_type = SingleChannelObs
+    elif params['obs_type'] == MultiChannelObs.__name__:
+        obs_type = MultiChannelObs
+    else:
+        raise ValueError("Invalid obs_type in params.json file.")
+
     print("\nUsing {} model at dir {}".format(args.model_name, log_dir))
 
     model = alg.load(os.path.join(log_dir, args.model_name))
@@ -77,7 +85,7 @@ def main():
     SERVER = os.environ.get('SERVER', 'localhost')
     PORT = os.environ.get('PORT', '8000')
 
-    loop.run_until_complete(agent_loop(model, params['agent_name'], "{}:{}".format(SERVER, PORT)))
+    loop.run_until_complete(agent_loop(model, obs_type, params['agent_name'], "{}:{}".format(SERVER, PORT)))
 
 
 if __name__ == "__main__":

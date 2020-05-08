@@ -24,6 +24,89 @@ class PacmanObservation(ABC):
         pass
 
 
+class MultiChannelObs(PacmanObservation):
+
+    PIXEL_IN = 255
+    PIXEL_EMPTY = 0
+
+    GHOST_IN = 255
+    GHOST_EMPTY = 128
+    GHOST_ZOMBIE = 0
+
+    ENERGY_IN = 64
+    BOOST_IN = 255
+    ENERGY_EMPTY = 0
+
+    # Channels Index
+    WALL_CH = 0
+    ENERGY_CH = 1
+    GHOST_CH = 2
+    PACMAN_CH = 3
+
+    def __init__(self, game_map):
+        super().__init__(game_map)
+
+        self._shape = (4, self._map.ver_tiles, self._map.hor_tiles)
+
+        self._obs = np.full(self._shape, self.PIXEL_EMPTY, dtype=np.uint8)
+
+        for y in range(self._map.ver_tiles):
+            for x in range(self._map.hor_tiles):
+                if self._map.is_wall((x, y)):
+                    self._obs[self.WALL_CH][y][x] = self.PIXEL_IN
+
+    def get_obs(self, game_state):
+
+        self._obs[self.ENERGY_CH][...] = self.ENERGY_EMPTY
+
+        for x, y in game_state['energy']:
+            self._obs[self.ENERGY_CH][y][x] = self.ENERGY_IN
+
+        for x, y in game_state['boost']:
+            self._obs[self.ENERGY_CH][y][x] = self.BOOST_IN
+
+        self._obs[self.GHOST_CH][...] = self.GHOST_EMPTY
+
+        for ghost in game_state['ghosts']:
+            x, y = ghost[0]
+
+            if ghost[1]:
+                self._obs[self.GHOST_CH][y][x] = self.GHOST_ZOMBIE
+            else:
+                self._obs[self.GHOST_CH][y][x] = self.GHOST_IN
+
+        self._obs[self.PACMAN_CH][...] = self.PIXEL_EMPTY
+
+        x, y = game_state['pacman']
+        self._obs[self.PACMAN_CH][y][x] = self.PIXEL_IN
+
+        return self._obs
+
+    def render(self):
+        for y in range(self._map.ver_tiles):
+            for x in range(self._map.hor_tiles):
+                color = Back.BLACK
+
+                if self._obs[self.PACMAN_CH][y][x] == self.PIXEL_IN:
+                    color = Back.YELLOW
+                elif self._obs[self.GHOST_CH][y][x] == self.GHOST_IN:
+                    color = Back.MAGENTA
+                elif self._obs[self.GHOST_CH][y][x] == self.GHOST_ZOMBIE:
+                    color = Back.BLUE
+                elif self._obs[self.ENERGY_CH][y][x] == self.BOOST_IN:
+                    color = Back.CYAN
+                elif self._obs[self.ENERGY_CH][y][x] == self.ENERGY_IN:
+                    color = Back.RED
+                elif self._obs[self.WALL_CH][y][x] == self.PIXEL_IN:
+                    color = Back.WHITE
+
+                print(color, ' ', end='')
+            print(Style.RESET_ALL)
+
+        # np.set_printoptions(edgeitems=30, linewidth=100000)
+        # print(self._obs)
+
+
 class SingleChannelObs(PacmanObservation):
 
     GHOST = 0

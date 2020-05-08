@@ -7,6 +7,7 @@ import numpy as np
 from stable_baselines.common.evaluation import evaluate_policy
 
 from gym_pacman import PacmanEnv
+from gym_observations import SingleChannelObs, MultiChannelObs
 from rl_utils.utils import get_alg, filter_tf_warnings, write_rows, EVAL_HEADER, get_elapsed_time
 
 
@@ -42,11 +43,18 @@ def main():
 
     alg = get_alg(params['alg'])
 
+    if params['obs_type'] == SingleChannelObs.__name__:
+        obs_type = SingleChannelObs
+    elif params['obs_type'] == MultiChannelObs.__name__:
+        obs_type = MultiChannelObs
+    else:
+        raise ValueError("Invalid obs_type in params.json file.")
+
     print("\nUsing {} model at dir {}".format(args.model_name, log_dir))
 
     model = alg.load(os.path.join(log_dir, args.model_name))
 
-    env = PacmanEnv(params['agent_name'], args.map, args.ghosts, args.level, args.lives, args.timeout)
+    env = PacmanEnv(obs_type, params['agent_name'], args.map, args.ghosts, args.level, args.lives, args.timeout)
 
     eval_start_time = time.time()
 

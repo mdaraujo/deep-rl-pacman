@@ -6,7 +6,7 @@ import gym
 from stable_baselines.common.env_checker import check_env
 
 from game import Game, TIME_BONUS_STEPS, POINT_ENERGY
-from gym_observations import SingleChannelObs
+from gym_observations import SingleChannelObs, MultiChannelObs
 
 
 class PacmanEnv(gym.Env):
@@ -17,13 +17,13 @@ class PacmanEnv(gym.Env):
 
     info_keywords = ('step', 'score', 'lives')
 
-    def __init__(self, agent_name, mapfile, ghosts, level_ghosts, lives, timeout):
+    def __init__(self, obs_type, agent_name, mapfile, ghosts, level_ghosts, lives, timeout):
 
         self.agent_name = agent_name
 
         self._game = Game(mapfile, ghosts, level_ghosts, lives, timeout)
 
-        self._pacman_obs = SingleChannelObs(self._game.map)
+        self._pacman_obs = obs_type(self._game.map)
 
         self.observation_space = self._pacman_obs.space
 
@@ -82,7 +82,9 @@ def main():
     lives = 3
     timeout = 3000
 
-    env = PacmanEnv(agent_name, mapfile, ghosts, level_ghosts, lives, timeout)
+    obs_type = MultiChannelObs
+
+    env = PacmanEnv(obs_type, agent_name, mapfile, ghosts, level_ghosts, lives, timeout)
     print("Checking environment...")
     check_env(env, warn=True)
 
@@ -103,7 +105,11 @@ def main():
     while not done:
         env.render()
 
-        y_arr, x_arr = np.where(obs[0] == SingleChannelObs.PACMAN)
+        if obs_type == SingleChannelObs:
+            y_arr, x_arr = np.where(obs[0] == SingleChannelObs.PACMAN)
+        elif obs_type == MultiChannelObs:
+            y_arr, x_arr = np.where(obs[MultiChannelObs.PACMAN_CH] == MultiChannelObs.PIXEL_IN)
+
         y, x = y_arr[0], x_arr[0]
 
         # Using agent from client example
@@ -132,10 +138,13 @@ def main():
         #     print("Received positive reward.")
         #     break
 
-        # if np.isin(PacmanObservation.GHOST_ZOMBIE, obs[0]):
-        #     env.render()
-        #     print("Zombie")
-        #     break
+        if (obs_type == SingleChannelObs and
+            np.isin(SingleChannelObs.GHOST_ZOMBIE, obs[0])) \
+                or (obs_type == MultiChannelObs and
+                    np.isin(MultiChannelObs.GHOST_ZOMBIE, obs[MultiChannelObs.GHOST_CH])):
+            env.render()
+            print("Zombie")
+            break
 
     print("score:", sum_rewards + (env._game._timeout / TIME_BONUS_STEPS))
 

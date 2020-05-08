@@ -7,6 +7,7 @@ from collections import OrderedDict
 from stable_baselines.bench import Monitor
 
 from gym_pacman import PacmanEnv
+from gym_observations import SingleChannelObs, MultiChannelObs
 from rl_utils.utils import get_alg, filter_tf_warnings
 from rl_utils.callbacks import PlotEvalSaveCallback
 from rl_utils.cnn_extractor import pacman_cnn
@@ -26,6 +27,8 @@ if __name__ == "__main__":
                         help="Number of evaluation episodes. (default: 30)")
     parser.add_argument("-tb", "--tensorboard", default=None,
                         help="Tensorboard logdir. (default: None)")
+    parser.add_argument("-s", "--single_channel_obs", action="store_true",
+                        help='Use Single Channel Observation (default: Use Multi Channel Observation)')
     parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
     parser.add_argument("--ghosts", help="Number of ghosts", type=int, default=1)
     parser.add_argument("--level", help="difficulty level of ghosts", choices=[0, 1, 2, 3], default=1)
@@ -33,12 +36,12 @@ if __name__ == "__main__":
     parser.add_argument("--timeout", help="Timeout after this amount of steps", type=int, default=3000)
     args = parser.parse_args()
 
+    now = datetime.now()
+
     eval_freq = args.eval_freq
 
     if not eval_freq:
         eval_freq = int(args.timesteps / 10)
-
-    now = datetime.now()
 
     alg_name = args.alg
 
@@ -52,6 +55,11 @@ if __name__ == "__main__":
 
     with open(AGENT_ID_FILE, 'w') as f:
         f.write(str(agent_id + 1))
+
+    obs_type = MultiChannelObs
+
+    if args.single_channel_obs:
+        obs_type = SingleChannelObs
 
     dir_name = "{}_{}".format(now.strftime('%y%m%d-%H%M%S'), agent_name)
 
@@ -67,6 +75,7 @@ if __name__ == "__main__":
     params['timesteps'] = args.timesteps
     params['eval_freq'] = eval_freq
     params['eval_episodes'] = args.eval_episodes
+    params['obs_type'] = obs_type.__name__
     params['map'] = args.map
     params['ghosts'] = args.ghosts
     params['level'] = args.level
@@ -77,7 +86,7 @@ if __name__ == "__main__":
     with open(os.path.join(log_dir, "params.json"), "w") as f:
         json.dump(params, f, indent=4)
 
-    env = PacmanEnv(agent_name, args.map, args.ghosts, args.level, args.lives, args.timeout)
+    env = PacmanEnv(obs_type, agent_name, args.map, args.ghosts, args.level, args.lives, args.timeout)
     env = Monitor(env, filename=log_dir, info_keywords=('score', ))
 
     filter_tf_warnings()
@@ -93,7 +102,7 @@ if __name__ == "__main__":
         model = alg("CnnPolicy", env, policy_kwargs=policy_kwargs,
                     tensorboard_log=args.tensorboard, verbose=0)
 
-    eval_env = PacmanEnv(agent_name, args.map, args.ghosts, int(args.level), args.lives, args.timeout)
+    eval_env = PacmanEnv(obs_type, agent_name, args.map, args.ghosts, int(args.level), args.lives, args.timeout)
 
     eval_callback = PlotEvalSaveCallback(eval_env, n_eval_episodes=args.eval_episodes,
                                          eval_freq=eval_freq,
