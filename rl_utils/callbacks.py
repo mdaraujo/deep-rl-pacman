@@ -6,7 +6,7 @@ import numpy as np
 from tqdm.auto import tqdm
 from stable_baselines.common.callbacks import EvalCallback
 
-from rl_utils.utils import get_elapsed_time, write_rows, EVAL_HEADER
+from rl_utils.utils import get_formated_time, write_rows, EVAL_HEADER
 
 
 class PlotEvalSaveCallback(EvalCallback):
@@ -43,7 +43,7 @@ class PlotEvalSaveCallback(EvalCallback):
         if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
             eval_start_time = time.time()
             super()._on_step()
-            _, eval_elapsed_time = get_elapsed_time(time.time(), eval_start_time)
+            eval_elapsed_time = get_formated_time(time.time() - eval_start_time)
 
             episode_rewards = self.evaluations_results[-1]
             episode_lengths = self.evaluations_length[-1]
@@ -82,15 +82,19 @@ class PlotEvalSaveCallback(EvalCallback):
         best_train_step_index = self.mean_rewards.index(self.best_mean_reward)
         best_train_step = self.train_steps[best_train_step_index]
 
-        _, elapsed_time = get_elapsed_time(time.time(), self.start_time)
+        elapsed_time = time.time() - self.start_time
+
+        process_time = time.process_time()
 
         train_logs = OrderedDict()
         train_logs['end_train_step'] = self.num_timesteps
         train_logs['best_train_step'] = best_train_step
-        train_logs['best_mean_reward'] = round(float(self.best_mean_reward), 2)
+        train_logs['best_mean_reward'] = round(float(self.best_mean_reward), 1)
         train_logs['last_eval_train_step'] = self.train_steps[-1]
-        train_logs['last_eval_mean_reward'] = round(float(self.mean_rewards[-1]), 2)
-        train_logs['elapsed_time'] = elapsed_time
+        train_logs['last_eval_mean_reward'] = round(float(self.mean_rewards[-1]), 1)
+        train_logs['elapsed_time'] = get_formated_time(elapsed_time)
+        train_logs['process_time'] = get_formated_time(process_time)
+        train_logs['process_time_s'] = round(process_time, 2)
 
         with open(os.path.join(self.log_dir, "train_logs.json"), "w") as f:
             json.dump(train_logs, f, indent=4)

@@ -38,11 +38,10 @@ def get_alg(alg_name):
     return None
 
 
-def get_elapsed_time(current_time, start_time):
-    elapsed_time_seconds = current_time - start_time
-    elapsed_time_h = datetime.timedelta(seconds=elapsed_time_seconds)
-    elapsed_time_h = str(datetime.timedelta(days=elapsed_time_h.days, seconds=elapsed_time_h.seconds))
-    return elapsed_time_seconds, elapsed_time_h
+def get_formated_time(seconds):
+    f_time = datetime.timedelta(seconds=seconds)
+    f_time = str(datetime.timedelta(days=f_time.days, seconds=f_time.seconds))
+    return f_time
 
 
 def filter_tf_warnings():

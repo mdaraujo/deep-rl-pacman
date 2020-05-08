@@ -8,7 +8,7 @@ from stable_baselines.common.evaluation import evaluate_policy
 
 from gym_pacman import PacmanEnv
 from gym_observations import SingleChannelObs, MultiChannelObs
-from rl_utils.utils import get_alg, filter_tf_warnings, write_rows, EVAL_HEADER, get_elapsed_time
+from rl_utils.utils import get_alg, filter_tf_warnings, write_rows, EVAL_HEADER, get_formated_time
 
 
 def main():
@@ -63,7 +63,7 @@ def main():
                                                        deterministic=False,
                                                        return_episode_rewards=True)
 
-    _, eval_elapsed_time = get_elapsed_time(time.time(), eval_start_time)
+    eval_elapsed_time = get_formated_time(time.time() - eval_start_time)
 
     mean_reward, std_reward = np.mean(episode_rewards), np.std(episode_rewards)
     mean_ep_length, std_ep_length = np.mean(episode_lengths), np.std(episode_lengths)
