@@ -2,11 +2,13 @@ import os
 import time
 import json
 from collections import OrderedDict
+
 import numpy as np
 from tqdm.auto import tqdm
 from stable_baselines.common.callbacks import EvalCallback
+from stable_baselines.results_plotter import load_results, ts2xy
 
-from rl_utils.utils import get_formated_time, write_rows, EVAL_HEADER
+from rl_utils.utils import get_formated_time, write_rows, EVAL_HEADER, plot_line, plot_error_bar
 
 
 class PlotEvalSaveCallback(EvalCallback):
@@ -69,6 +71,20 @@ class PlotEvalSaveCallback(EvalCallback):
 
             write_rows(os.path.join(self.log_dir, 'evaluations.csv'),
                        rows, EVAL_HEADER)
+
+            plot_error_bar(self.train_steps, self.mean_rewards, self.std_rewards,
+                           'Evaluation Mean Episode Rewards', 'Timestep', 'Mean Episode Reward',
+                           os.path.join(self.log_dir, 'eval_rewards.png'),
+                           self.min_rewards, self.max_rewards)
+
+            plot_error_bar(self.train_steps, self.mean_ep_lengths, self.std_ep_lengths,
+                           'Evaluation Mean Episode Lengths', 'Timestep', 'Mean Episode Length',
+                           os.path.join(self.log_dir, 'eval_lengths.png'))
+
+            x, y = ts2xy(load_results(self.log_dir), 'timesteps')
+
+            plot_line(x, y, 'Training Rewards | Total Episodes: {}'.format(len(y)), 'Timestep', 'Episode Reward',
+                      os.path.join(self.log_dir, 'train_rewards.png'))
 
         return True
 

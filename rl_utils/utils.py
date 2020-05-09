@@ -4,7 +4,7 @@ import logging
 import datetime
 import csv
 import numpy as np
-
+import matplotlib.pyplot as plt
 from stable_baselines import PPO2, DQN
 
 FIG_SIZE = (10, 5)
@@ -27,6 +27,46 @@ def write_rows(outfile, rows, header, mode='w'):
             new_row = [format(x, '6.1f') if isinstance(x, float) or isinstance(x, np.float32) else x for x in row]
             new_row = [format(x, '8d') if isinstance(x, int) else x for x in new_row]
             writer.writerow(new_row)
+
+
+def plot_line(x, y, title, x_label, y_label, outfile):
+    fig, ax = plt.subplots()
+    ax.set_title(title)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+
+    ax.plot(x, y)
+
+    ax.relim()
+    ax.autoscale_view(True, True, True)
+    fig.tight_layout()
+    fig.canvas.draw()
+    fig.savefig(outfile)
+
+
+def plot_error_bar(x, means, std, title, x_label, y_label, outfile, mins=None, maxes=None):
+    fig, ax = plt.subplots()
+    ax.set_title(title)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+
+    ax.plot(x, means, color='tab:blue', marker='o', label='Mean', zorder=2)
+
+    ax.errorbar(x, means, std, color='tab:orange',
+                fmt='|', label='Standard deviation', zorder=1)
+
+    if mins and maxes:
+        ax.scatter(x, maxes, color='tab:green',
+                   marker='o', label='Maximum', zorder=3)
+        ax.scatter(x, mins, color='tab:green',
+                   marker='x', label='Minimum', zorder=3)
+
+    ax.autoscale_view(True, True, True)
+    ax.legend(loc='best', shadow=True, fancybox=True, framealpha=0.7)
+
+    fig.tight_layout()
+    fig.canvas.draw()
+    fig.savefig(outfile)
 
 
 def get_alg(alg_name):
