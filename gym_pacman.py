@@ -17,7 +17,9 @@ class PacmanEnv(gym.Env):
 
     info_keywords = ('step', 'score', 'lives')
 
-    def __init__(self, obs_type, agent_name, mapfile, ghosts, level_ghosts, lives, timeout):
+    def __init__(self, obs_type, positive_rewards, agent_name, mapfile, ghosts, level_ghosts, lives, timeout):
+
+        self.positive_rewards = positive_rewards
 
         self.agent_name = agent_name
 
@@ -43,20 +45,21 @@ class PacmanEnv(gym.Env):
 
         reward = game_state['score'] - self._current_score
 
-        reward -= 1.0 / TIME_BONUS_STEPS
-
-        if game_state['lives'] == 0:
-            reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
-
         self._current_score = game_state['score']
-
-        info = {k: game_state[k] for k in self.info_keywords if k in game_state}
 
         done = not self._game.running
 
-        if done and self._game._timeout != game_state['step'] and game_state['lives'] > 0:
-            print(" -- WIN -- ")
-            reward = POINT_ENERGY
+        if not self.positive_rewards:
+
+            reward -= 1.0 / TIME_BONUS_STEPS
+
+            if game_state['lives'] == 0:
+                reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
+
+            if done and self._game._timeout != game_state['step'] and game_state['lives'] > 0:
+                reward = POINT_ENERGY
+
+        info = {k: game_state[k] for k in self.info_keywords if k in game_state}
 
         return self._pacman_obs.get_obs(game_state), reward, done, info
 
@@ -85,7 +88,9 @@ def main():
 
     obs_type = MultiChannelObs
 
-    env = PacmanEnv(obs_type, agent_name, mapfile, ghosts, level_ghosts, lives, timeout)
+    positive_rewards = False
+
+    env = PacmanEnv(obs_type, positive_rewards, agent_name, mapfile, ghosts, level_ghosts, lives, timeout)
     print("Checking environment...")
     check_env(env, warn=True)
 

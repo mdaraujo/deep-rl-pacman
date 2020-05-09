@@ -29,6 +29,8 @@ if __name__ == "__main__":
                         help="Tensorboard logdir. (default: None)")
     parser.add_argument("-s", "--single_channel_obs", action="store_true",
                         help='Use Single Channel Observation (default: Use Multi Channel Observation)')
+    parser.add_argument("-pr", "--positive_rewards", action="store_true",
+                        help='Use positive rewards (default: Use negative rewards)')
     parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
     parser.add_argument("--ghosts", help="Number of ghosts", type=int, default=1)
     parser.add_argument("--level", help="difficulty level of ghosts", choices=[0, 1, 2, 3], default=1)
@@ -76,6 +78,7 @@ if __name__ == "__main__":
     params['eval_freq'] = eval_freq
     params['eval_episodes'] = args.eval_episodes
     params['obs_type'] = obs_type.__name__
+    params['positive_rewards'] = args.positive_rewards
     params['map'] = args.map
     params['ghosts'] = args.ghosts
     params['level'] = args.level
@@ -86,7 +89,8 @@ if __name__ == "__main__":
     with open(os.path.join(log_dir, "params.json"), "w") as f:
         json.dump(params, f, indent=4)
 
-    env = PacmanEnv(obs_type, agent_name, args.map, args.ghosts, args.level, args.lives, args.timeout)
+    env = PacmanEnv(obs_type, args.positive_rewards, agent_name, args.map,
+                    args.ghosts, args.level, args.lives, args.timeout)
     env = Monitor(env, filename=log_dir, info_keywords=('score', ))
 
     filter_tf_warnings()
@@ -102,7 +106,8 @@ if __name__ == "__main__":
         model = alg("CnnPolicy", env, policy_kwargs=policy_kwargs,
                     tensorboard_log=args.tensorboard, verbose=0)
 
-    eval_env = PacmanEnv(obs_type, agent_name, args.map, args.ghosts, int(args.level), args.lives, args.timeout)
+    eval_env = PacmanEnv(obs_type, args.positive_rewards, agent_name, args.map,
+                         args.ghosts, int(args.level), args.lives, args.timeout)
 
     eval_callback = PlotEvalSaveCallback(eval_env, n_eval_episodes=args.eval_episodes,
                                          eval_freq=eval_freq,

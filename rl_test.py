@@ -54,7 +54,8 @@ def main():
 
     model = alg.load(os.path.join(log_dir, args.model_name))
 
-    env = PacmanEnv(obs_type, params['agent_name'], args.map, args.ghosts, args.level, args.lives, args.timeout)
+    env = PacmanEnv(obs_type, params['positive_rewards'], params['agent_name'],
+                    args.map, args.ghosts, args.level, args.lives, args.timeout)
 
     eval_start_time = time.time()
 
