@@ -65,7 +65,16 @@ if __name__ == "__main__":
     if args.single_channel_obs:
         obs_type = SingleChannelObs
 
-    dir_name = "{}_{}_{}".format(agent_id, alg_name, now.strftime('%y%m%d-%H%M%S'))
+    rewards_str = 'Neg'
+
+    if args.positive_rewards:
+        rewards_str = 'Pos'
+
+    dir_name = "{}_{}_{}_{}_{}_{}".format(agent_id, alg_name,
+                                          obs_type.__name__[:4],
+                                          rewards_str,
+                                          args.gamma,
+                                          now.strftime('%y%m%d-%H%M%S'))
 
     log_dir = os.path.join(LOGS_BASE_DIR, dir_name)
 
