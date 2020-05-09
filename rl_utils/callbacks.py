@@ -92,17 +92,21 @@ class PlotEvalSaveCallback(BaseCallback):
         write_rows(os.path.join(self.log_dir, 'evaluations.csv'), rows, EVAL_HEADER)
 
         plot_error_bar(self.train_steps, self.mean_rewards, self.std_rewards,
-                       'Evaluation Mean Episode Rewards', 'Timestep', 'Mean Episode Reward',
+                       'Evaluations Mean Reward on {} Episodes | Best: {:.1f}'.format(
+                           self.n_eval_episodes, self.best_mean_reward),
+                       'Training Step', 'Mean Episodes Reward',
                        os.path.join(self.log_dir, 'eval_rewards.png'),
                        self.min_rewards, self.max_rewards)
 
         plot_error_bar(self.train_steps, self.mean_ep_lengths, self.std_ep_lengths,
-                       'Evaluation Mean Episode Lengths', 'Timestep', 'Mean Episode Length',
+                       'Evaluations Mean Length on {} Episodes'.format(self.n_eval_episodes),
+                       'Training Step', 'Mean Episodes Length',
                        os.path.join(self.log_dir, 'eval_lengths.png'))
 
         x, y = ts2xy(load_results(self.log_dir), 'timesteps')
 
-        plot_line(x, y, 'Training Rewards | Total Episodes: {}'.format(len(y)), 'Timestep', 'Episode Reward',
+        plot_line(x, y, 'Training Rewards | Total Episodes: {}'.format(len(y)),
+                  'Training Step', 'Episode Reward',
                   os.path.join(self.log_dir, 'train_rewards.png'))
 
     def __enter__(self):

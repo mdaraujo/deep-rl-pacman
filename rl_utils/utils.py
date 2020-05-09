@@ -7,7 +7,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from stable_baselines import PPO2, DQN
 
-FIG_SIZE = (10, 5)
 
 EVAL_HEADER = ["TrainStep", "MeanReward", "StdReward", "MaxReward", "MinReward",
                "MeanEpLength", "StdEpLength", "EvaluationTime", "EvaluationEpisodes"]
@@ -50,16 +49,16 @@ def plot_error_bar(x, means, std, title, x_label, y_label, outfile, mins=None, m
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
 
-    ax.plot(x, means, color='tab:blue', marker='o', label='Mean', zorder=2)
+    ax.plot(x, means, color='tab:blue', marker='o', label='Mean', zorder=3)
 
     ax.errorbar(x, means, std, color='tab:orange',
                 fmt='|', label='Standard deviation', zorder=1)
 
     if mins and maxes:
         ax.scatter(x, maxes, color='tab:green',
-                   marker='o', label='Maximum', zorder=3)
+                   marker='o', label='Maximum', zorder=2)
         ax.scatter(x, mins, color='tab:green',
-                   marker='x', label='Minimum', zorder=3)
+                   marker='x', label='Minimum', zorder=2)
 
     ax.autoscale_view(True, True, True)
     ax.legend(loc='best', shadow=True, fancybox=True, framealpha=0.7)
