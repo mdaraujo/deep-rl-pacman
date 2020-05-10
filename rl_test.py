@@ -71,6 +71,7 @@ def main():
 
     header = EVAL_HEADER.copy()
     header[0] = 'ModelName'
+    header.append('EvaluationEpisodes')
 
     rows = [[args.model_name, mean_reward, std_reward,
              max(episode_rewards), min(episode_rewards),

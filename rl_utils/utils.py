@@ -9,7 +9,7 @@ from stable_baselines import PPO2, DQN
 
 
 EVAL_HEADER = ["TrainStep", "MeanReward", "StdReward", "MaxReward", "MinReward",
-               "MeanEpLength", "StdEpLength", "EvaluationTime", "EvaluationEpisodes"]
+               "MeanEpLength", "StdEpLength", "EvaluationTime"]
 
 
 def plot_error_bar(x, means, std, title, x_label, y_label, outfile, mins=None, maxes=None):

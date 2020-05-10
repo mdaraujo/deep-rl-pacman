@@ -82,12 +82,10 @@ class PlotEvalSaveCallback(BaseCallback):
         self.std_ep_lengths.append(std_ep_length)
         self.evals_elapsed_time.append(eval_elapsed_time)
 
-        eval_episodes = [self.n_eval_episodes for _ in range(len(self.mean_rewards))]
-
         rows = zip(self.train_steps, self.mean_rewards, self.std_rewards,
                    self.max_rewards, self.min_rewards,
                    self.mean_ep_lengths, self.std_ep_lengths,
-                   self.evals_elapsed_time, eval_episodes)
+                   self.evals_elapsed_time)
 
         write_rows(os.path.join(self.log_dir, 'evaluations.csv'), rows, EVAL_HEADER)
 
