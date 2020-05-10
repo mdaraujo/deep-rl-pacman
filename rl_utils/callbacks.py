@@ -9,7 +9,7 @@ from stable_baselines.common.callbacks import BaseCallback
 from stable_baselines.common.evaluation import evaluate_policy
 from stable_baselines.results_plotter import load_results, ts2xy
 
-from rl_utils.utils import get_formated_time, write_rows, EVAL_HEADER, plot_line, plot_error_bar
+from rl_utils.utils import get_formated_time, write_rows, EVAL_HEADER, plot_line, plot_error_bar, moving_average
 
 
 class PlotEvalSaveCallback(BaseCallback):
@@ -108,6 +108,16 @@ class PlotEvalSaveCallback(BaseCallback):
         plot_line(x, y, 'Training Rewards | Total Episodes: {}'.format(len(y)),
                   'Training Step', 'Episode Reward',
                   os.path.join(self.log_dir, 'train_rewards.png'))
+
+        n = 100
+        if len(y) < n * 2:
+            n = 10
+
+        moving_y = moving_average(y, n=n)
+
+        plot_line(x[n-1:], moving_y, 'Training Rewards Moving Mean | Total Episodes: {}'.format(len(y)),
+                  'Training Step', 'Mean {} Episode Reward'.format(n),
+                  os.path.join(self.log_dir, 'train_rewards_MM.png'))
 
     def __enter__(self):
         return self

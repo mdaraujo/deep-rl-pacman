@@ -12,37 +12,6 @@ EVAL_HEADER = ["TrainStep", "MeanReward", "StdReward", "MaxReward", "MinReward",
                "MeanEpLength", "StdEpLength", "EvaluationTime", "EvaluationEpisodes"]
 
 
-def write_rows(outfile, rows, header, mode='w'):
-
-    file_exists = os.path.isfile(outfile)
-
-    with open(outfile, mode) as f:
-        writer = csv.writer(f)
-
-        if mode == 'w' or not file_exists:
-            writer.writerow(header)
-
-        for row in rows:
-            new_row = [format(x, '6.1f') if isinstance(x, float) or isinstance(x, np.float32) else x for x in row]
-            new_row = [format(x, '8d') if isinstance(x, int) else x for x in new_row]
-            writer.writerow(new_row)
-
-
-def plot_line(x, y, title, x_label, y_label, outfile):
-    fig, ax = plt.subplots()
-    ax.set_title(title)
-    ax.set_xlabel(x_label)
-    ax.set_ylabel(y_label)
-
-    ax.plot(x, y)
-
-    ax.relim()
-    ax.autoscale_view(True, True, True)
-    fig.tight_layout()
-    fig.canvas.draw()
-    fig.savefig(outfile)
-
-
 def plot_error_bar(x, means, std, title, x_label, y_label, outfile, mins=None, maxes=None):
     fig, ax = plt.subplots()
     ax.set_title(title)
@@ -66,6 +35,43 @@ def plot_error_bar(x, means, std, title, x_label, y_label, outfile, mins=None, m
     fig.tight_layout()
     fig.canvas.draw()
     fig.savefig(outfile)
+
+
+def plot_line(x, y, title, x_label, y_label, outfile):
+    fig, ax = plt.subplots()
+    ax.set_title(title)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+
+    ax.plot(x, y)
+
+    ax.relim()
+    ax.autoscale_view(True, True, True)
+    fig.tight_layout()
+    fig.canvas.draw()
+    fig.savefig(outfile)
+
+
+def moving_average(a, n=3):
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
+
+
+def write_rows(outfile, rows, header, mode='w'):
+
+    file_exists = os.path.isfile(outfile)
+
+    with open(outfile, mode) as f:
+        writer = csv.writer(f)
+
+        if mode == 'w' or not file_exists:
+            writer.writerow(header)
+
+        for row in rows:
+            new_row = [format(x, '6.1f') if isinstance(x, float) or isinstance(x, np.float32) else x for x in row]
+            new_row = [format(x, '8d') if isinstance(x, int) else x for x in new_row]
+            writer.writerow(new_row)
 
 
 def get_alg(alg_name):
