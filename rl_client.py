@@ -31,9 +31,13 @@ async def agent_loop(model, obs_type, agent_name, server_address="localhost:8000
             r = await websocket.recv()
             state = json.loads(r)
 
-            if not state['lives']:
-                print("GAME OVER - Score: {}".format(state['score']))
-                return
+            if 'lives' in state:
+                if not state['lives']:
+                    print("GAME OVER - Score: {}".format(state['score']))
+                    return
+            else:
+                print("WIN - Score: {}".format(state['score']))
+                break
 
             obs = pacman_obs.get_obs(state)
 
