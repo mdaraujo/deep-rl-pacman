@@ -2,13 +2,11 @@ import os
 import argparse
 import time
 import json
-import numpy as np
-
-from stable_baselines.common.evaluation import evaluate_policy
 
 from gym_pacman import PacmanEnv
 from gym_observations import SingleChannelObs, MultiChannelObs
 from rl_utils.utils import get_alg, filter_tf_warnings, write_rows, EVAL_HEADER, get_formated_time
+from rl_utils.utils import evaluate_policy, get_results_columns
 
 
 def main():
@@ -59,23 +57,24 @@ def main():
 
     eval_start_time = time.time()
 
-    episode_returns, episode_lengths = evaluate_policy(model, env,
-                                                       n_eval_episodes=args.eval_episodes,
-                                                       deterministic=False,
-                                                       return_episode_rewards=True)
+    episode_returns, episode_lengths, episode_scores = evaluate_policy(model, env,
+                                                                       n_eval_episodes=args.eval_episodes,
+                                                                       deterministic=False,
+                                                                       render=False)
 
     eval_elapsed_time = get_formated_time(time.time() - eval_start_time)
-
-    mean_return, std_return = np.mean(episode_returns), np.std(episode_returns)
-    mean_ep_length, std_ep_length = np.mean(episode_lengths), np.std(episode_lengths)
 
     header = EVAL_HEADER.copy()
     header[0] = 'ModelName'
     header.append('EvaluationEpisodes')
 
-    rows = [[args.model_name, mean_return, std_return,
-             max(episode_returns), min(episode_returns),
-             mean_ep_length, std_ep_length,
+    mean_return, std_return, max_return, min_return = get_results_columns(episode_returns)
+    mean_length, std_length, max_length, min_length = get_results_columns(episode_lengths)
+    mean_score, std_score, max_score, min_score = get_results_columns(episode_scores)
+
+    rows = [[args.model_name, mean_score, std_score, max_score, min_score,
+             mean_return, std_return, max_return, min_return,
+             mean_length, std_length, max_length, min_length,
              eval_elapsed_time, args.eval_episodes]]
 
     write_rows(os.path.join(log_dir, 'test_evaluations.csv'),

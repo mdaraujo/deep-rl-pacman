@@ -6,13 +6,49 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 from stable_baselines import PPO2, DQN
+from stable_baselines.common.vec_env import VecEnv
 
 
-EVAL_HEADER = ["TrainStep", "MeanReturn", "StdReturn", "MaxReturn", "MinReturn",
-               "MeanEpLength", "StdEpLength", "EvaluationTime"]
+EVAL_HEADER = ["TrainStep", "MeanScore", "StdScore", "MaxScore", "MinScore",
+               "MeanReturn", "StdReturn", "MaxReturn", "MinReturn",
+               "MeanLength", "StdLength", "MaxLength", "MinLength"]
 
 
-def plot_error_bar(x, means, std, title, x_label, y_label, outfile, mins=None, maxes=None):
+def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, render=False):
+    """
+    Runs policy for `n_eval_episodes` episodes and returns episodes returns, lengths and scores.
+    This is made to work only with one env.
+
+    Based on stable-baselines.common.evaluate_policy method
+    """
+    if isinstance(env, VecEnv):
+        assert env.num_envs == 1, "You must pass only one environment when using this function"
+
+    episode_returns, episode_lengths, episode_scores = [], [], []
+    for _ in range(n_eval_episodes):
+        obs = env.reset()
+        done, state = False, None
+        episode_return = 0.0
+        episode_length = 0
+        while not done:
+            action, state = model.predict(obs, state=state, deterministic=deterministic)
+            obs, reward, done, info = env.step(action)
+            episode_return += reward
+            episode_length += 1
+            if render:
+                env.render()
+        episode_returns.append(episode_return)
+        episode_lengths.append(episode_length)
+        episode_scores.append(info['score'])
+
+    return episode_returns, episode_lengths, episode_scores
+
+
+def get_results_columns(results):
+    return np.mean(results), np.std(results), max(results), min(results)
+
+
+def plot_error_bar(x, means, std, maxes, mins, title, x_label, y_label, outfile):
     fig, ax = plt.subplots()
     ax.set_title(title)
     ax.set_xlabel(x_label)
@@ -23,11 +59,10 @@ def plot_error_bar(x, means, std, title, x_label, y_label, outfile, mins=None, m
     ax.errorbar(x, means, std, color='tab:orange',
                 fmt='|', label='Std Deviation', zorder=1)
 
-    if mins and maxes:
-        ax.scatter(x, maxes, color='tab:green',
-                   marker='o', label='Maximum', zorder=2)
-        ax.scatter(x, mins, color='tab:green',
-                   marker='x', label='Minimum', zorder=2)
+    ax.scatter(x, maxes, color='tab:green',
+               marker='o', label='Maximum', zorder=2)
+    ax.scatter(x, mins, color='tab:green',
+               marker='x', label='Minimum', zorder=2)
 
     ax.autoscale_view(True, True, True)
     ax.legend(loc='best', shadow=True, fancybox=True, framealpha=0.7)
