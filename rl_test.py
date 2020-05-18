@@ -59,22 +59,22 @@ def main():
 
     eval_start_time = time.time()
 
-    episode_rewards, episode_lengths = evaluate_policy(model, env,
+    episode_returns, episode_lengths = evaluate_policy(model, env,
                                                        n_eval_episodes=args.eval_episodes,
                                                        deterministic=False,
                                                        return_episode_rewards=True)
 
     eval_elapsed_time = get_formated_time(time.time() - eval_start_time)
 
-    mean_reward, std_reward = np.mean(episode_rewards), np.std(episode_rewards)
+    mean_return, std_return = np.mean(episode_returns), np.std(episode_returns)
     mean_ep_length, std_ep_length = np.mean(episode_lengths), np.std(episode_lengths)
 
     header = EVAL_HEADER.copy()
     header[0] = 'ModelName'
     header.append('EvaluationEpisodes')
 
-    rows = [[args.model_name, mean_reward, std_reward,
-             max(episode_rewards), min(episode_rewards),
+    rows = [[args.model_name, mean_return, std_return,
+             max(episode_returns), min(episode_returns),
              mean_ep_length, std_ep_length,
              eval_elapsed_time, args.eval_episodes]]
 

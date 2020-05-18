@@ -22,16 +22,16 @@ class PlotEvalSaveCallback(BaseCallback):
         self.eval_env = eval_env
         self.n_eval_episodes = n_eval_episodes
         self.eval_freq = eval_freq
-        self.best_mean_reward = -np.inf
+        self.best_mean_return = -np.inf
         self.deterministic = deterministic
         self.log_dir = log_dir
         self.pbar = None
         self.start_time = None
         self.train_steps = []
-        self.mean_rewards = []
-        self.std_rewards = []
-        self.max_rewards = []
-        self.min_rewards = []
+        self.mean_returns = []
+        self.std_returns = []
+        self.max_returns = []
+        self.min_returns = []
         self.mean_ep_lengths = []
         self.std_ep_lengths = []
         self.evals_elapsed_time = []
@@ -58,7 +58,7 @@ class PlotEvalSaveCallback(BaseCallback):
     def eval_save_plot(self):
         eval_start_time = time.time()
 
-        episode_rewards, episode_lengths = evaluate_policy(self.model, self.eval_env,
+        episode_returns, episode_lengths = evaluate_policy(self.model, self.eval_env,
                                                            n_eval_episodes=self.n_eval_episodes,
                                                            render=False,
                                                            deterministic=self.deterministic,
@@ -66,46 +66,46 @@ class PlotEvalSaveCallback(BaseCallback):
 
         eval_elapsed_time = get_formated_time(time.time() - eval_start_time)
 
-        mean_reward, std_reward = np.mean(episode_rewards), np.std(episode_rewards)
+        mean_return, std_return = np.mean(episode_returns), np.std(episode_returns)
         mean_ep_length, std_ep_length = np.mean(episode_lengths), np.std(episode_lengths)
 
-        if mean_reward > self.best_mean_reward:
+        if mean_return > self.best_mean_return:
             self.model.save(os.path.join(self.log_dir, 'best_model'))
-            self.best_mean_reward = mean_reward
+            self.best_mean_return = mean_return
 
         self.train_steps.append(self.num_timesteps)
-        self.mean_rewards.append(mean_reward)
-        self.std_rewards.append(std_reward)
-        self.max_rewards.append(max(episode_rewards))
-        self.min_rewards.append(min(episode_rewards))
+        self.mean_returns.append(mean_return)
+        self.std_returns.append(std_return)
+        self.max_returns.append(max(episode_returns))
+        self.min_returns.append(min(episode_returns))
         self.mean_ep_lengths.append(mean_ep_length)
         self.std_ep_lengths.append(std_ep_length)
         self.evals_elapsed_time.append(eval_elapsed_time)
 
-        rows = zip(self.train_steps, self.mean_rewards, self.std_rewards,
-                   self.max_rewards, self.min_rewards,
+        rows = zip(self.train_steps, self.mean_returns, self.std_returns,
+                   self.max_returns, self.min_returns,
                    self.mean_ep_lengths, self.std_ep_lengths,
                    self.evals_elapsed_time)
 
         write_rows(os.path.join(self.log_dir, 'evaluations.csv'), rows, EVAL_HEADER)
 
-        plot_error_bar(self.train_steps, self.mean_rewards, self.std_rewards,
-                       'Evaluations Mean Reward on {} Episodes | Best: {:.1f}'.format(
-                           self.n_eval_episodes, self.best_mean_reward),
-                       'Training Step', 'Mean Episodes Reward',
-                       os.path.join(self.log_dir, 'eval_rewards.png'),
-                       self.min_rewards, self.max_rewards)
+        plot_error_bar(self.train_steps, self.mean_returns, self.std_returns,
+                       'Evaluations Mean Return on {} Episodes | Best: {:.1f}'.format(
+                           self.n_eval_episodes, self.best_mean_return),
+                       'Training Step', 'Evaluation Mean Return',
+                       os.path.join(self.log_dir, 'eval_returns.png'),
+                       self.min_returns, self.max_returns)
 
         plot_error_bar(self.train_steps, self.mean_ep_lengths, self.std_ep_lengths,
                        'Evaluations Mean Length on {} Episodes'.format(self.n_eval_episodes),
-                       'Training Step', 'Mean Episodes Length',
+                       'Training Step', 'Evaluation Mean Length',
                        os.path.join(self.log_dir, 'eval_lengths.png'))
 
         x, y = ts2xy(load_results(self.log_dir), 'timesteps')
 
-        plot_line(x, y, 'Training Rewards | Total Episodes: {}'.format(len(y)),
-                  'Training Step', 'Episode Reward',
-                  os.path.join(self.log_dir, 'train_rewards.png'))
+        plot_line(x, y, 'Training Episodes Return | Total Episodes: {}'.format(len(y)),
+                  'Training Step', 'Episode Return',
+                  os.path.join(self.log_dir, 'train_returns.png'))
 
         n = 100
         if len(y) < n * 2:
@@ -113,9 +113,9 @@ class PlotEvalSaveCallback(BaseCallback):
 
         moving_y = moving_average(y, n=n)
 
-        plot_line(x[n-1:], moving_y, 'Training Rewards Moving Mean | Total Episodes: {}'.format(len(y)),
-                  'Training Step', 'Mean {} Episode Reward'.format(n),
-                  os.path.join(self.log_dir, 'train_rewards_MM.png'))
+        plot_line(x[n-1:], moving_y, 'Training Episodes Return Moving Mean | Total Episodes: {}'.format(len(y)),
+                  'Training Step', '{} Last Episodes Mean Return'.format(n),
+                  os.path.join(self.log_dir, 'train_returns_MM.png'))
 
     def __enter__(self):
         return self
@@ -124,7 +124,7 @@ class PlotEvalSaveCallback(BaseCallback):
 
         self.model.save(os.path.join(self.log_dir, 'end_model'))
 
-        best_train_step_index = self.mean_rewards.index(self.best_mean_reward)
+        best_train_step_index = self.mean_returns.index(self.best_mean_return)
         best_train_step = self.train_steps[best_train_step_index]
 
         elapsed_time = time.time() - self.start_time
@@ -134,9 +134,9 @@ class PlotEvalSaveCallback(BaseCallback):
         train_logs = OrderedDict()
         train_logs['end_train_step'] = self.num_timesteps
         train_logs['best_train_step'] = best_train_step
-        train_logs['best_mean_reward'] = round(float(self.best_mean_reward), 1)
+        train_logs['best_mean_return'] = round(float(self.best_mean_return), 1)
         train_logs['last_eval_train_step'] = self.train_steps[-1]
-        train_logs['last_eval_mean_reward'] = round(float(self.mean_rewards[-1]), 1)
+        train_logs['last_eval_mean_return'] = round(float(self.mean_returns[-1]), 1)
         train_logs['elapsed_time'] = get_formated_time(elapsed_time)
         train_logs['process_time'] = get_formated_time(process_time)
         train_logs['process_time_s'] = round(process_time, 2)

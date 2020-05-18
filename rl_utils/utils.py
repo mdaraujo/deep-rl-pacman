@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from stable_baselines import PPO2, DQN
 
 
-EVAL_HEADER = ["TrainStep", "MeanReward", "StdReward", "MaxReward", "MinReward",
+EVAL_HEADER = ["TrainStep", "MeanReturn", "StdReturn", "MaxReturn", "MinReturn",
                "MeanEpLength", "StdEpLength", "EvaluationTime"]
 
 
@@ -21,7 +21,7 @@ def plot_error_bar(x, means, std, title, x_label, y_label, outfile, mins=None, m
     ax.plot(x, means, color='tab:blue', marker='o', label='Mean', zorder=3)
 
     ax.errorbar(x, means, std, color='tab:orange',
-                fmt='|', label='Standard deviation', zorder=1)
+                fmt='|', label='Std Deviation', zorder=1)
 
     if mins and maxes:
         ax.scatter(x, maxes, color='tab:green',
