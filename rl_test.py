@@ -22,8 +22,8 @@ def main():
     parser.add_argument("-e", "--eval_episodes", type=int, default=30,
                         help="Number of evaluation episodes. (default: 30)")
     parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
-    parser.add_argument("--ghosts", help="Number of ghosts", type=int, default=1)
-    parser.add_argument("--level", help="difficulty level of ghosts", choices=[0, 1, 2, 3], default=1)
+    parser.add_argument("--ghosts", help="Maximum number of ghosts", type=int, default=4)
+    parser.add_argument("--level", help="difficulty level of ghosts", choices=['0', '1', '2', '3'], default='3')
     parser.add_argument("--lives", help="Number of lives", type=int, default=3)
     parser.add_argument("--timeout", help="Timeout after this amount of steps", type=int, default=3000)
     args = parser.parse_args()
@@ -55,7 +55,7 @@ def main():
     model = alg.load(os.path.join(log_dir, args.model_name))
 
     env = PacmanEnv(obs_type, params['positive_rewards'], params['agent_name'],
-                    args.map, args.ghosts, args.level, args.lives, args.timeout)
+                    args.map, args.ghosts, int(args.level), args.lives, args.timeout)
 
     eval_start_time = time.time()
 

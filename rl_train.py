@@ -34,8 +34,8 @@ if __name__ == "__main__":
     parser.add_argument("-g", "--gamma", type=float, default=0.99,
                         help="Discount factor. (default: 0.99)")
     parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
-    parser.add_argument("--ghosts", help="Number of ghosts", type=int, default=1)
-    parser.add_argument("--level", help="difficulty level of ghosts", choices=[0, 1, 2, 3], default=1)
+    parser.add_argument("--ghosts", help="Maximum number of ghosts", type=int, default=4)
+    parser.add_argument("--level", help="difficulty level of ghosts", choices=['0', '1', '2', '3'], default='3')
     parser.add_argument("--lives", help="Number of lives", type=int, default=3)
     parser.add_argument("--timeout", help="Timeout after this amount of steps", type=int, default=3000)
     args = parser.parse_args()
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     params['gamma'] = args.gamma
     params['map'] = args.map
     params['ghosts'] = args.ghosts
-    params['level'] = args.level
+    params['level'] = int(args.level)
     params['lives'] = args.lives
     params['timeout'] = args.timeout
     params['datetime'] = now.replace(microsecond=0).isoformat()
@@ -102,8 +102,8 @@ if __name__ == "__main__":
         json.dump(params, f, indent=4)
 
     env = PacmanEnv(obs_type, args.positive_rewards, agent_name, args.map,
-                    args.ghosts, args.level, args.lives, args.timeout)
-    env = Monitor(env, filename=log_dir, info_keywords=('score', ))
+                    args.ghosts, int(args.level), args.lives, args.timeout)
+    env = Monitor(env, filename=log_dir, info_keywords=('score', 'ghosts'))
 
     filter_tf_warnings()
 
@@ -117,6 +117,8 @@ if __name__ == "__main__":
     elif alg_name == "PPO":
         model = alg("CnnPolicy", env, policy_kwargs=policy_kwargs,
                     gamma=args.gamma, tensorboard_log=args.tensorboard, verbose=0)
+        # model = alg("CnnPolicy", env, policy_kwargs=policy_kwargs, ent_coef=0.0, learning_rate=3e-4,
+        #             gamma=args.gamma, tensorboard_log=args.tensorboard, verbose=0)
 
     eval_env = PacmanEnv(obs_type, args.positive_rewards, agent_name, args.map,
                          args.ghosts, int(args.level), args.lives, args.timeout)

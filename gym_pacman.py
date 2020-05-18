@@ -5,7 +5,7 @@ import gym
 
 from stable_baselines.common.env_checker import check_env
 
-from game import Game, TIME_BONUS_STEPS, POINT_ENERGY
+from game import Game, TIME_BONUS_STEPS, POINT_ENERGY, POINT_GHOST
 from gym_observations import SingleChannelObs, MultiChannelObs
 
 
@@ -15,15 +15,17 @@ class PacmanEnv(gym.Env):
 
     keys = {0: 'w', 1: 'a', 2: 's', 3: 'd'}
 
-    info_keywords = ('step', 'score', 'lives')
+    info_keywords = ('step', 'score', 'lives', 'ghosts')
 
-    def __init__(self, obs_type, positive_rewards, agent_name, mapfile, ghosts, level_ghosts, lives, timeout):
+    def __init__(self, obs_type, positive_rewards, agent_name, mapfile, max_ghosts, level_ghosts, lives, timeout):
 
         self.positive_rewards = positive_rewards
 
         self.agent_name = agent_name
 
-        self._game = Game(mapfile, ghosts, level_ghosts, lives, timeout)
+        self.max_ghosts = max_ghosts
+
+        self._game = Game(mapfile, max_ghosts, level_ghosts, lives, timeout)
 
         self._pacman_obs = obs_type(self._game.map)
 
@@ -32,6 +34,8 @@ class PacmanEnv(gym.Env):
         self.action_space = gym.spaces.Discrete(len(self.keys))
 
         self._current_score = 0
+
+        self.current_lives = self._game._initial_lives
 
     def step(self, action):
         if not self.action_space.contains(action):
@@ -47,6 +51,9 @@ class PacmanEnv(gym.Env):
 
         self._current_score = game_state['score']
 
+        if game_state['lives'] < self.current_lives:
+            self.current_lives = game_state['lives']
+
         done = not self._game.running
 
         if not self.positive_rewards:
@@ -54,19 +61,24 @@ class PacmanEnv(gym.Env):
             reward -= 1.0 / TIME_BONUS_STEPS
 
             if game_state['lives'] == 0:
-                reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
+                # reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
+                reward -= 2 * POINT_GHOST
 
             if done and self._game._timeout != game_state['step'] and game_state['lives'] > 0:
-                reward = POINT_ENERGY
+                print(' -- WIN -- ')
+                # reward = POINT_ENERGY
 
         info = {k: game_state[k] for k in self.info_keywords if k in game_state}
+        info['ghosts'] = len(info['ghosts'])
 
         return self._pacman_obs.get_obs(game_state), reward, done, info
 
     def reset(self):
         self._current_score = 0
+        self._game._n_ghosts = random.randint(1, self.max_ghosts)
         self._game.start(self.agent_name)
         self._game.compute_next_frame()
+        self.current_lives = self._game._initial_lives
         game_state = json.loads(self._game.state)
         return self._pacman_obs.get_obs(game_state)
 
@@ -81,7 +93,7 @@ def main():
 
     agent_name = "GymEnvTestAgent"
     mapfile = "data/map1.bmp"
-    ghosts = 1
+    ghosts = 4
     level_ghosts = 1
     lives = 3
     timeout = 3000
@@ -152,7 +164,7 @@ def main():
         #     print("Zombie")
         #     break
 
-    print("score:", sum_rewards + (env._game._timeout / TIME_BONUS_STEPS))
+    # print("score:", sum_rewards + (env._game._timeout / TIME_BONUS_STEPS))
 
 
 if __name__ == "__main__":
