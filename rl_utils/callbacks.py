@@ -33,6 +33,7 @@ class PlotEvalSaveCallback(BaseCallback):
         self.evals_elapsed_time = []
         self.best_mean_score = -np.inf
         self.best_train_step = 0
+        self.train_ghosts = []
 
     def _on_training_start(self):
         super()._on_training_start()
@@ -84,9 +85,14 @@ class PlotEvalSaveCallback(BaseCallback):
         mean_lengths, std_lengths, max_lengths, min_lengths = map(list, zip(*self.lengths_columns))
         mean_scores, std_scores, max_scores, min_scores = map(list, zip(*self.scores_columns))
 
+        train_results = load_results(self.log_dir)
+
+        self.train_ghosts.append(train_results['ghosts'].mean())
+
         rows = zip(self.train_steps, mean_scores, std_scores, max_scores, min_scores,
                    mean_returns, std_returns, max_returns, min_returns,
-                   mean_lengths, std_lengths, max_lengths, min_lengths, self.evals_elapsed_time)
+                   mean_lengths, std_lengths, max_lengths, min_lengths,
+                   self.evals_elapsed_time, self.train_ghosts)
 
         write_rows(os.path.join(self.log_dir, 'evaluations.csv'), rows, EVAL_HEADER)
 
@@ -105,8 +111,6 @@ class PlotEvalSaveCallback(BaseCallback):
                        'Evaluations Mean Length on {} Episodes'.format(self.n_eval_episodes),
                        'Training Step', 'Evaluation Mean Length',
                        os.path.join(self.log_dir, 'eval_lengths.png'))
-
-        train_results = load_results(self.log_dir)
 
         # Train returns
         x, train_returns = ts2xy(train_results, 'timesteps')

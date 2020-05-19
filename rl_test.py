@@ -66,7 +66,7 @@ def main():
 
     header = EVAL_HEADER.copy()
     header[0] = 'ModelName'
-    header.append('EvaluationEpisodes')
+    header[-1] = 'EvaluationEpisodes'
 
     mean_return, std_return, max_return, min_return = get_results_columns(episode_returns)
     mean_length, std_length, max_length, min_length = get_results_columns(episode_lengths)
@@ -77,8 +77,7 @@ def main():
              mean_length, std_length, max_length, min_length,
              eval_elapsed_time, args.eval_episodes]]
 
-    write_rows(os.path.join(log_dir, 'test_evaluations.csv'),
-               rows, header, mode='a')
+    write_rows(os.path.join(log_dir, 'test_evaluations.csv'), rows, header, mode='a')
 
 
 if __name__ == "__main__":

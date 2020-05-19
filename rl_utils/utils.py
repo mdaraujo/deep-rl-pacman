@@ -11,7 +11,7 @@ from stable_baselines.common.vec_env import VecEnv
 
 EVAL_HEADER = ["TrainStep", "MeanScore", "StdScore", "MaxScore", "MinScore",
                "MeanReturn", "StdReturn", "MaxReturn", "MinReturn",
-               "MeanLength", "StdLength", "MaxLength", "MinLength"]
+               "MeanLength", "StdLength", "MaxLength", "MinLength", "EvaluationTime", "TrainGhostsMean"]
 
 
 def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, render=False):
