@@ -11,7 +11,8 @@ from stable_baselines.common.vec_env import VecEnv
 
 EVAL_HEADER = ["TrainStep", "MeanScore", "StdScore", "MaxScore", "MinScore",
                "MeanReturn", "StdReturn", "MaxReturn", "MinReturn",
-               "MeanLength", "StdLength", "MaxLength", "MinLength", "EvaluationTime", "TrainGhostsMean"]
+               "MeanLength", "StdLength", "MaxLength", "MinLength",
+               "EvalGhostsMean", "EvaluationTime", "TrainGhostsMean"]
 
 
 def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, render=False):
@@ -24,8 +25,19 @@ def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, render=F
     if isinstance(env, VecEnv):
         assert env.num_envs == 1, "You must pass only one environment when using this function"
 
-    episode_returns, episode_lengths, episode_scores = [], [], []
+    change_ghosts_ep = n_eval_episodes / env.max_ghosts
+    n_ghosts = 1
+    count = 0
+
+    episode_returns, episode_lengths, episode_scores, episode_ghosts = [], [], [], []
+
     for _ in range(n_eval_episodes):
+
+        if count >= change_ghosts_ep:
+            count = 0
+            n_ghosts += 1
+
+        env.set_n_ghosts(n_ghosts)
         obs = env.reset()
         done, state = False, None
         episode_return = 0.0
@@ -40,8 +52,10 @@ def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, render=F
         episode_returns.append(episode_return)
         episode_lengths.append(episode_length)
         episode_scores.append(info['score'])
+        episode_ghosts.append(info['ghosts'])
+        count += 1
 
-    return episode_returns, episode_lengths, episode_scores
+    return episode_returns, episode_lengths, episode_scores, episode_ghosts
 
 
 def get_results_columns(results):

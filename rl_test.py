@@ -2,6 +2,7 @@ import os
 import argparse
 import time
 import json
+import numpy as np
 
 from gym_pacman import PacmanEnv
 from gym_observations import SingleChannelObs, MultiChannelObs
@@ -17,8 +18,8 @@ def main():
                         help="Use latest dir inside 'logdir' (default: run for 'logdir')")
     parser.add_argument('-m', '--model_name', type=str, default="best_model",
                         help="Model file name (default: best_model)")
-    parser.add_argument("-e", "--eval_episodes", type=int, default=30,
-                        help="Number of evaluation episodes. (default: 30)")
+    parser.add_argument("-e", "--eval_episodes", type=int, default=40,
+                        help="Number of evaluation episodes. (default: 40)")
     parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
     parser.add_argument("--ghosts", help="Maximum number of ghosts", type=int, default=4)
     parser.add_argument("--level", help="difficulty level of ghosts", choices=['0', '1', '2', '3'], default='3')
@@ -53,14 +54,15 @@ def main():
     model = alg.load(os.path.join(log_dir, args.model_name))
 
     env = PacmanEnv(obs_type, params['positive_rewards'], params['agent_name'],
-                    args.map, args.ghosts, int(args.level), args.lives, args.timeout)
+                    args.map, args.ghosts, int(args.level), args.lives, args.timeout,
+                    ghosts_rnd=False)
 
     eval_start_time = time.time()
 
-    episode_returns, episode_lengths, episode_scores = evaluate_policy(model, env,
-                                                                       n_eval_episodes=args.eval_episodes,
-                                                                       deterministic=False,
-                                                                       render=False)
+    episode_returns, episode_lengths, episode_scores, episode_ghosts = evaluate_policy(model, env,
+                                                                                       args.eval_episodes,
+                                                                                       deterministic=False,
+                                                                                       render=False)
 
     eval_elapsed_time = get_formated_time(time.time() - eval_start_time)
 
@@ -75,7 +77,7 @@ def main():
     rows = [[args.model_name, mean_score, std_score, max_score, min_score,
              mean_return, std_return, max_return, min_return,
              mean_length, std_length, max_length, min_length,
-             eval_elapsed_time, args.eval_episodes]]
+             np.mean(episode_ghosts), eval_elapsed_time, args.eval_episodes]]
 
     write_rows(os.path.join(log_dir, 'test_evaluations.csv'), rows, header, mode='a')
 

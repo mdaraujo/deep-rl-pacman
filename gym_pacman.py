@@ -17,7 +17,8 @@ class PacmanEnv(gym.Env):
 
     info_keywords = ('step', 'score', 'lives', 'ghosts')
 
-    def __init__(self, obs_type, positive_rewards, agent_name, mapfile, max_ghosts, level_ghosts, lives, timeout):
+    def __init__(self, obs_type, positive_rewards, agent_name, mapfile,
+                 max_ghosts, level_ghosts, lives, timeout, ghosts_rnd=True):
 
         self.positive_rewards = positive_rewards
 
@@ -25,7 +26,9 @@ class PacmanEnv(gym.Env):
 
         self.max_ghosts = max_ghosts
 
-        self._game = Game(mapfile, max_ghosts, level_ghosts, lives, timeout)
+        self.ghosts_rnd = ghosts_rnd
+
+        self._game = Game(mapfile, self.max_ghosts, level_ghosts, lives, timeout)
 
         self._pacman_obs = obs_type(self._game.map)
 
@@ -75,12 +78,16 @@ class PacmanEnv(gym.Env):
 
     def reset(self):
         self._current_score = 0
-        self._game._n_ghosts = random.randint(1, self.max_ghosts)
+        if self.ghosts_rnd:
+            self.set_n_ghosts(random.randint(1, self.max_ghosts))
         self._game.start(self.agent_name)
         self._game.compute_next_frame()
         self.current_lives = self._game._initial_lives
         game_state = json.loads(self._game.state)
         return self._pacman_obs.get_obs(game_state)
+
+    def set_n_ghosts(self, n_ghosts):
+        self._game._n_ghosts = n_ghosts
 
     def render(self, mode='human'):
         self._pacman_obs.render()

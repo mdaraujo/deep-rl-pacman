@@ -23,8 +23,8 @@ if __name__ == "__main__":
                         help="Total timesteps (default: 20000)")
     parser.add_argument("-f", "--eval_freq", type=int, default=None,
                         help="Number of callback calls between evaluations. (default: timesteps/10)")
-    parser.add_argument("-e", "--eval_episodes", type=int, default=30,
-                        help="Number of evaluation episodes. (default: 30)")
+    parser.add_argument("-e", "--eval_episodes", type=int, default=40,
+                        help="Number of evaluation episodes. (default: 40)")
     parser.add_argument("-tb", "--tensorboard", default=None,
                         help="Tensorboard logdir. (default: None)")
     parser.add_argument("-s", "--single_channel_obs", action="store_true",
@@ -121,7 +121,8 @@ if __name__ == "__main__":
         #             gamma=args.gamma, tensorboard_log=args.tensorboard, verbose=0)
 
     eval_env = PacmanEnv(obs_type, args.positive_rewards, agent_name, args.map,
-                         args.ghosts, int(args.level), args.lives, args.timeout)
+                         args.ghosts, int(args.level), args.lives, args.timeout,
+                         ghosts_rnd=False)
 
     eval_callback = PlotEvalSaveCallback(eval_env, n_eval_episodes=args.eval_episodes,
                                          eval_freq=eval_freq,
