@@ -1,9 +1,11 @@
 import os
 import argparse
 import json
+import time
 import asyncio
 import websockets
 
+from game import GAME_SPEED
 from mapa import Map
 from gym_pacman import PacmanEnv
 from gym_observations import SingleChannelObs, MultiChannelObs
@@ -17,7 +19,7 @@ async def agent_loop(model, obs_type, agent_name, server_address="localhost:8000
         await websocket.send(json.dumps({"cmd": "join", "name": agent_name}))
         msg = await websocket.recv()
 
-        print("Started.")
+        print("Available frame time: {} ms".format(1. / GAME_SPEED * 1000))
 
         game_properties = json.loads(msg)
 
@@ -29,6 +31,9 @@ async def agent_loop(model, obs_type, agent_name, server_address="localhost:8000
 
         while True:
             r = await websocket.recv()
+
+            start_time = time.time()
+
             state = json.loads(r)
 
             if 'lives' in state:
@@ -44,6 +49,13 @@ async def agent_loop(model, obs_type, agent_name, server_address="localhost:8000
             action, _states = model.predict(obs, deterministic=False)
 
             key = keys[action]
+
+            elapsed_time = time.time() - start_time
+
+            # print(elapsed_time * 1000, 1. / GAME_SPEED * 1000)
+
+            assert elapsed_time <= 1. / GAME_SPEED, \
+                "The agent needed more than {} ms to take an action.".format(1. / GAME_SPEED * 1000)
 
             await websocket.send(json.dumps({"cmd": "key", "key": key}))
 
@@ -83,6 +95,13 @@ def main():
     print("\nUsing {} model at dir {}".format(args.model_name, log_dir))
 
     model = alg.load(os.path.join(log_dir, args.model_name))
+
+    # Dummy env to force model loading with predict function
+    env = PacmanEnv(obs_type, params['positive_rewards'], params['agent_name'],
+                    params['map'], params['ghosts'], params['level'], params['lives'],
+                    params['timeout'], ghosts_rnd=False)
+
+    model.predict(env.reset())
 
     loop = asyncio.get_event_loop()
 
