@@ -5,7 +5,7 @@ import gym
 
 from stable_baselines.common.env_checker import check_env
 
-from game import Game, TIME_BONUS_STEPS, POINT_ENERGY, POINT_GHOST
+from game import Game, TIME_BONUS_STEPS, POINT_ENERGY, POINT_BOOST, POINT_GHOST
 from gym_observations import SingleChannelObs, MultiChannelObs
 
 
@@ -40,6 +40,10 @@ class PacmanEnv(gym.Env):
 
         self.current_lives = self._game._initial_lives
 
+        self.total_energy = len(self._game.map.energy)
+
+        self.base_energy_reward = 0.05
+
     def step(self, action):
         if not self.action_space.contains(action):
             raise ValueError("Received invalid action={} which is not part of the action space.".format(action))
@@ -61,7 +65,10 @@ class PacmanEnv(gym.Env):
 
         if not self.positive_rewards:
 
-            reward -= 1.0 / TIME_BONUS_STEPS
+            if reward == POINT_ENERGY:
+                eaten_energies = self.total_energy - len(game_state['energy'])
+
+                reward = self.base_energy_reward * eaten_energies
 
             if game_state['lives'] == 0:
                 # reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
@@ -69,7 +76,10 @@ class PacmanEnv(gym.Env):
 
             if done and self._game._timeout != game_state['step'] and game_state['lives'] > 0:
                 print(' -- WIN -- ')
-                # reward = POINT_ENERGY
+                if reward > self.base_energy_reward * self.total_energy:
+                    reward = POINT_BOOST
+
+            reward -= 1.0 / TIME_BONUS_STEPS
 
         info = {k: game_state[k] for k in self.info_keywords if k in game_state}
         info['ghosts'] = len(info['ghosts'])
