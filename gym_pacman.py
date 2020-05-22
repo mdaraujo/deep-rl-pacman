@@ -17,6 +17,9 @@ class PacmanEnv(gym.Env):
 
     info_keywords = ('step', 'score', 'lives', 'ghosts')
 
+    MAX_ENERGY_REWARD = 1.5
+    MIN_ENERGY_REWARD = 0.5
+
     def __init__(self, obs_type, positive_rewards, agent_name, mapfile,
                  max_ghosts, level_ghosts, lives, timeout, ghosts_rnd=True):
 
@@ -42,7 +45,9 @@ class PacmanEnv(gym.Env):
 
         self.total_energy = len(self._game.map.energy)
 
-        self.base_energy_reward = 0.05
+        self.energy_reward_increment = (self.MAX_ENERGY_REWARD - self.MIN_ENERGY_REWARD) / (self.total_energy - 1)
+
+        self._current_energy_reward = self.MIN_ENERGY_REWARD
 
     def step(self, action):
         if not self.action_space.contains(action):
@@ -56,6 +61,11 @@ class PacmanEnv(gym.Env):
 
         reward = game_state['score'] - self._current_score
 
+        if reward == POINT_ENERGY:
+            reward = self._current_energy_reward
+            self._current_energy_reward += self.energy_reward_increment
+            # print(self.total_energy - len(game_state['energy']), reward)
+
         self._current_score = game_state['score']
 
         if game_state['lives'] < self.current_lives:
@@ -65,19 +75,12 @@ class PacmanEnv(gym.Env):
 
         if not self.positive_rewards:
 
-            if reward == POINT_ENERGY:
-                eaten_energies = self.total_energy - len(game_state['energy'])
-
-                reward = self.base_energy_reward * eaten_energies
-
             if game_state['lives'] == 0:
                 # reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
                 reward -= 2 * POINT_GHOST
 
             if done and self._game._timeout != game_state['step'] and game_state['lives'] > 0:
-                print(' -- WIN -- ')
-                if reward > self.base_energy_reward * self.total_energy:
-                    reward = POINT_BOOST
+                reward = self._current_energy_reward
 
             reward -= 1.0 / TIME_BONUS_STEPS
 
@@ -88,6 +91,7 @@ class PacmanEnv(gym.Env):
 
     def reset(self):
         self._current_score = 0
+        self._current_energy_reward = self.MIN_ENERGY_REWARD
         if self.ghosts_rnd:
             self.set_n_ghosts(random.randint(1, self.max_ghosts))
         self._game.start(self.agent_name)
