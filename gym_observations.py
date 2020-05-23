@@ -29,9 +29,9 @@ class MultiChannelObs(PacmanObservation):
     PIXEL_IN = 255
     PIXEL_EMPTY = 0
 
-    GHOST_IN = 255
-    GHOST_EMPTY = 128
-    GHOST_ZOMBIE = 0
+    GHOST_IN = 64
+    GHOST_ZOMBIE = 255
+    GHOST_EMPTY = 0
 
     ENERGY_IN = 64
     BOOST_IN = 255
