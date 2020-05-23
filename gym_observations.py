@@ -39,14 +39,15 @@ class MultiChannelObs(PacmanObservation):
 
     # Channels Index
     WALL_CH = 0
-    ENERGY_CH = 1
-    GHOST_CH = 2
-    PACMAN_CH = 3
+    EMPTY_CH = 1
+    ENERGY_CH = 2
+    GHOST_CH = 3
+    PACMAN_CH = 4
 
     def __init__(self, game_map):
         super().__init__(game_map)
 
-        self._shape = (4, self._map.ver_tiles, self._map.hor_tiles)
+        self._shape = (5, self._map.ver_tiles, self._map.hor_tiles)
 
         self._obs = np.full(self._shape, self.PIXEL_EMPTY, dtype=np.uint8)
 
@@ -57,15 +58,26 @@ class MultiChannelObs(PacmanObservation):
 
     def get_obs(self, game_state):
 
-        self._obs[self.ENERGY_CH][...] = self.ENERGY_EMPTY
+        # Reset channels
+        for y in range(self._map.ver_tiles):
+            for x in range(self._map.hor_tiles):
+
+                self._obs[self.ENERGY_CH][y][x] = self.ENERGY_EMPTY
+                self._obs[self.GHOST_CH][y][x] = self.GHOST_EMPTY
+                self._obs[self.PACMAN_CH][y][x] = self.PIXEL_EMPTY
+
+                if self._obs[self.WALL_CH][y][x] == self.PIXEL_IN:
+                    self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
+                else:
+                    self._obs[self.EMPTY_CH][y][x] = self.PIXEL_IN
 
         for x, y in game_state['energy']:
             self._obs[self.ENERGY_CH][y][x] = self.ENERGY_IN
+            self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
 
         for x, y in game_state['boost']:
             self._obs[self.ENERGY_CH][y][x] = self.BOOST_IN
-
-        self._obs[self.GHOST_CH][...] = self.GHOST_EMPTY
+            self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
 
         for ghost in game_state['ghosts']:
             x, y = ghost[0]
@@ -74,18 +86,18 @@ class MultiChannelObs(PacmanObservation):
                 self._obs[self.GHOST_CH][y][x] = self.GHOST_ZOMBIE
             else:
                 self._obs[self.GHOST_CH][y][x] = self.GHOST_IN
-
-        self._obs[self.PACMAN_CH][...] = self.PIXEL_EMPTY
+            self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
 
         x, y = game_state['pacman']
         self._obs[self.PACMAN_CH][y][x] = self.PIXEL_IN
+        self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
 
         return self._obs
 
     def render(self):
         for y in range(self._map.ver_tiles):
             for x in range(self._map.hor_tiles):
-                color = Back.BLACK
+                color = None
 
                 if self._obs[self.PACMAN_CH][y][x] == self.PIXEL_IN:
                     color = Back.YELLOW
@@ -99,6 +111,8 @@ class MultiChannelObs(PacmanObservation):
                     color = Back.RED
                 elif self._obs[self.WALL_CH][y][x] == self.PIXEL_IN:
                     color = Back.WHITE
+                elif self._obs[self.EMPTY_CH][y][x] == self.PIXEL_IN:
+                    color = Back.BLACK
 
                 print(color, ' ', end='')
             print(Style.RESET_ALL)
