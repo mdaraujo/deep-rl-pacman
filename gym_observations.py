@@ -59,17 +59,12 @@ class MultiChannelObs(PacmanObservation):
     def get_obs(self, game_state):
 
         # Reset channels
-        for y in range(self._map.ver_tiles):
-            for x in range(self._map.hor_tiles):
+        self._obs[self.EMPTY_CH][...] = self.PIXEL_IN
+        self._obs[self.EMPTY_CH][...] -= self._obs[self.WALL_CH][...]
 
-                self._obs[self.ENERGY_CH][y][x] = self.ENERGY_EMPTY
-                self._obs[self.GHOST_CH][y][x] = self.GHOST_EMPTY
-                self._obs[self.PACMAN_CH][y][x] = self.PIXEL_EMPTY
-
-                if self._obs[self.WALL_CH][y][x] == self.PIXEL_IN:
-                    self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
-                else:
-                    self._obs[self.EMPTY_CH][y][x] = self.PIXEL_IN
+        self._obs[self.ENERGY_CH][...] = self.ENERGY_EMPTY
+        self._obs[self.GHOST_CH][...] = self.GHOST_EMPTY
+        self._obs[self.PACMAN_CH][...] = self.PIXEL_EMPTY
 
         for x, y in game_state['energy']:
             self._obs[self.ENERGY_CH][y][x] = self.ENERGY_IN

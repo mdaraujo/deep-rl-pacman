@@ -55,7 +55,7 @@ async def agent_loop(model, obs_type, agent_name, server_address="localhost:8000
             # print(elapsed_time * 1000, 1. / GAME_SPEED * 1000)
 
             assert elapsed_time <= 1. / GAME_SPEED, \
-                "The agent needed more than {} ms to take an action.".format(1. / GAME_SPEED * 1000)
+                "The agent needed {} ms to take an action.".format(elapsed_time * 1000)
 
             await websocket.send(json.dumps({"cmd": "key", "key": key}))
 
