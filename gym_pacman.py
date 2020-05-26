@@ -5,7 +5,7 @@ import gym
 
 from stable_baselines.common.env_checker import check_env
 
-from game import Game, TIME_BONUS_STEPS, POINT_ENERGY, POINT_BOOST, POINT_GHOST
+from game import Game, POINT_ENERGY
 from gym_observations import SingleChannelObs, MultiChannelObs
 
 
@@ -77,12 +77,12 @@ class PacmanEnv(gym.Env):
 
             if game_state['lives'] == 0:
                 # reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
-                reward -= 2 * POINT_GHOST
+                reward -= 120
 
             if done and self._game._timeout != game_state['step'] and game_state['lives'] > 0:
                 reward = self._current_energy_reward
 
-            reward -= 1.0 / TIME_BONUS_STEPS
+            reward -= 0.05
 
         info = {k: game_state[k] for k in self.info_keywords if k in game_state}
         info['ghosts'] = len(info['ghosts'])
@@ -177,10 +177,8 @@ def main():
         #     print("Received positive reward.")
         #     break
 
-        # if (obs_type == SingleChannelObs and
-        #     np.isin(SingleChannelObs.GHOST_ZOMBIE, obs[0])) \
-        #         or (obs_type == MultiChannelObs and
-        #             np.isin(MultiChannelObs.GHOST_ZOMBIE, obs[MultiChannelObs.GHOST_CH])):
+        # if (obs_type == SingleChannelObs and np.isin(SingleChannelObs.GHOST_ZOMBIE, obs[0])) \
+        #         or (obs_type == MultiChannelObs and np.isin(MultiChannelObs.PIXEL_IN, obs[MultiChannelObs.ZOMBIE_CH])):
         #     env.render()
         #     print("Zombie")
         #     break
