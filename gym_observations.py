@@ -29,10 +29,6 @@ class MultiChannelObs(PacmanObservation):
     PIXEL_IN = 255
     PIXEL_EMPTY = 0
 
-    GHOST_IN = 64
-    GHOST_ZOMBIE = 255
-    GHOST_EMPTY = 0
-
     ENERGY_IN = 64
     BOOST_IN = 255
     ENERGY_EMPTY = 0
@@ -42,12 +38,13 @@ class MultiChannelObs(PacmanObservation):
     EMPTY_CH = 1
     ENERGY_CH = 2
     GHOST_CH = 3
-    PACMAN_CH = 4
+    ZOMBIE_CH = 4
+    PACMAN_CH = 5
 
     def __init__(self, game_map):
         super().__init__(game_map)
 
-        self._shape = (5, self._map.ver_tiles, self._map.hor_tiles)
+        self._shape = (6, self._map.ver_tiles, self._map.hor_tiles)
 
         self._obs = np.full(self._shape, self.PIXEL_EMPTY, dtype=np.uint8)
 
@@ -63,7 +60,8 @@ class MultiChannelObs(PacmanObservation):
         self._obs[self.EMPTY_CH][...] -= self._obs[self.WALL_CH][...]
 
         self._obs[self.ENERGY_CH][...] = self.ENERGY_EMPTY
-        self._obs[self.GHOST_CH][...] = self.GHOST_EMPTY
+        self._obs[self.GHOST_CH][...] = self.PIXEL_EMPTY
+        self._obs[self.ZOMBIE_CH][...] = self.PIXEL_EMPTY
         self._obs[self.PACMAN_CH][...] = self.PIXEL_EMPTY
 
         for x, y in game_state['energy']:
@@ -78,9 +76,10 @@ class MultiChannelObs(PacmanObservation):
             x, y = ghost[0]
 
             if ghost[1]:
-                self._obs[self.GHOST_CH][y][x] = self.GHOST_ZOMBIE
+                self._obs[self.ZOMBIE_CH][y][x] = self.PIXEL_IN
             else:
-                self._obs[self.GHOST_CH][y][x] = self.GHOST_IN
+                self._obs[self.GHOST_CH][y][x] = self.PIXEL_IN
+
             self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
 
         x, y = game_state['pacman']
@@ -96,9 +95,9 @@ class MultiChannelObs(PacmanObservation):
 
                 if self._obs[self.PACMAN_CH][y][x] == self.PIXEL_IN:
                     color = Back.YELLOW
-                elif self._obs[self.GHOST_CH][y][x] == self.GHOST_IN:
+                elif self._obs[self.GHOST_CH][y][x] == self.PIXEL_IN:
                     color = Back.MAGENTA
-                elif self._obs[self.GHOST_CH][y][x] == self.GHOST_ZOMBIE:
+                elif self._obs[self.ZOMBIE_CH][y][x] == self.PIXEL_IN:
                     color = Back.BLUE
                 elif self._obs[self.ENERGY_CH][y][x] == self.BOOST_IN:
                     color = Back.CYAN
