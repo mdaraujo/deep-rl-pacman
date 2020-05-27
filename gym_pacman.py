@@ -79,8 +79,8 @@ class PacmanEnv(gym.Env):
                 # reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
                 reward -= 120
 
-            if done and self._game._timeout != game_state['step'] and game_state['lives'] > 0:
-                reward = self._current_energy_reward
+            # if done and self._game._timeout != game_state['step'] and game_state['lives'] > 0:
+            #     reward = self._current_energy_reward
 
             reward -= 0.05
 
@@ -92,8 +92,14 @@ class PacmanEnv(gym.Env):
     def reset(self):
         self._current_score = 0
         self._current_energy_reward = self.MIN_ENERGY_REWARD
+
         if self.ghosts_rnd:
-            self.set_n_ghosts(random.randint(1, self.max_ghosts))
+            if self.max_ghosts == 4:
+                n_ghosts = np.random.choice([1, 2, 3, 4], replace=False, p=[0.1, 0.2, 0.3, 0.4])
+                self.set_n_ghosts(n_ghosts)
+            else:
+                self.set_n_ghosts(random.randint(1, self.max_ghosts))
+
         self._game.start(self.agent_name)
         self._game.compute_next_frame()
         self.current_lives = self._game._initial_lives
@@ -178,7 +184,8 @@ def main():
         #     break
 
         # if (obs_type == SingleChannelObs and np.isin(SingleChannelObs.GHOST_ZOMBIE, obs[0])) \
-        #         or (obs_type == MultiChannelObs and np.isin(MultiChannelObs.PIXEL_IN, obs[MultiChannelObs.ZOMBIE_CH])):
+        #         or (obs_type == MultiChannelObs and
+        #             np.isin(MultiChannelObs.PIXEL_IN, obs[MultiChannelObs.ZOMBIE_CH])):
         #     env.render()
         #     print("Zombie")
         #     break
