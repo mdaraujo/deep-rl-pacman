@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
     env = PacmanEnv(obs_type, args.positive_rewards, agent_name, args.map,
                     args.ghosts, int(args.level), args.lives, args.timeout)
-    env = Monitor(env, filename=log_dir, info_keywords=('score', 'ghosts'))
+    env = Monitor(env, filename=log_dir, info_keywords=('score', 'ghosts', 'win'))
 
     filter_tf_warnings()
 

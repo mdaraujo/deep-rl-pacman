@@ -79,13 +79,14 @@ class PacmanEnv(gym.Env):
                 # reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
                 reward -= 120
 
-            # if done and self._game._timeout != game_state['step'] and game_state['lives'] > 0:
-            #     reward = self._current_energy_reward
-
             reward -= 0.05
 
         info = {k: game_state[k] for k in self.info_keywords if k in game_state}
         info['ghosts'] = len(info['ghosts'])
+        info['win'] = 0
+
+        if done and self._game._timeout != game_state['step'] and game_state['lives'] > 0:
+            info['win'] = 1
 
         return self._pacman_obs.get_obs(game_state), reward, done, info
 

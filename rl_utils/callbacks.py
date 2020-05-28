@@ -32,6 +32,7 @@ class PlotEvalSaveCallback(BaseCallback):
         self.scores_columns = []
         self.evals_elapsed_time = []
         self.evals_ghosts_mean = []
+        self.evals_n_wins = []
         self.best_mean_score = -np.inf
         self.best_train_step = 0
         self.train_ghosts = []
@@ -58,17 +59,18 @@ class PlotEvalSaveCallback(BaseCallback):
     def eval_save_plot(self):
         eval_start_time = time.time()
 
-        episode_returns, episode_lengths, episode_scores, episode_ghosts = evaluate_policy(self.model, self.eval_env,
-                                                                                           self.n_eval_episodes,
-                                                                                           self.deterministic,
-                                                                                           render=False)
+        returns, lengths, scores, ghosts, n_wins = evaluate_policy(self.model, self.eval_env,
+                                                                   self.n_eval_episodes,
+                                                                   self.deterministic,
+                                                                   render=False)
 
         eval_elapsed_time = get_formated_time(time.time() - eval_start_time)
 
-        returns_columns = get_results_columns(episode_returns)
-        lengths_columns = get_results_columns(episode_lengths)
-        scores_columns = get_results_columns(episode_scores)
-        self.evals_ghosts_mean.append(np.mean(episode_ghosts))
+        returns_columns = get_results_columns(returns)
+        lengths_columns = get_results_columns(lengths)
+        scores_columns = get_results_columns(scores)
+        self.evals_ghosts_mean.append(np.mean(ghosts))
+        self.evals_n_wins.append(n_wins)
 
         mean_score = scores_columns[0]
 
@@ -94,7 +96,8 @@ class PlotEvalSaveCallback(BaseCallback):
         rows = zip(self.train_steps, mean_scores, std_scores, max_scores, min_scores,
                    mean_returns, std_returns, max_returns, min_returns,
                    mean_lengths, std_lengths, max_lengths, min_lengths,
-                   self.evals_ghosts_mean, self.evals_elapsed_time, self.train_ghosts)
+                   self.evals_ghosts_mean, self.evals_n_wins,
+                   self.evals_elapsed_time, self.train_ghosts)
 
         write_rows(os.path.join(self.log_dir, 'evaluations.csv'), rows, EVAL_HEADER)
 

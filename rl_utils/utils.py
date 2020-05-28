@@ -12,10 +12,10 @@ from stable_baselines.common.vec_env import VecEnv
 EVAL_HEADER = ["TrainStep", "MeanScore", "StdScore", "MaxScore", "MinScore",
                "MeanReturn", "StdReturn", "MaxReturn", "MinReturn",
                "MeanLength", "StdLength", "MaxLength", "MinLength",
-               "EvalGhostsMean", "EvaluationTime", "TrainGhostsMean"]
+               "EvalGhostsMean", "Wins", "EvaluationTime", "TrainGhostsMean"]
 
 
-def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, render=False):
+def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, fixed_n_ghosts=False, render=False):
     """
     Runs policy for `n_eval_episodes` episodes and returns episodes returns, lengths and scores.
     This is made to work only with one env.
@@ -31,13 +31,18 @@ def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, render=F
 
     episode_returns, episode_lengths, episode_scores, episode_ghosts = [], [], [], []
 
+    n_wins = 0
+
     for _ in range(n_eval_episodes):
 
-        if count >= change_ghosts_ep:
-            count = 0
-            n_ghosts += 1
+        if not fixed_n_ghosts:
 
-        env.set_n_ghosts(n_ghosts)
+            if count >= change_ghosts_ep:
+                count = 0
+                n_ghosts += 1
+
+            env.set_n_ghosts(n_ghosts)
+
         obs = env.reset()
         done, state = False, None
         episode_return = 0.0
@@ -53,9 +58,10 @@ def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, render=F
         episode_lengths.append(episode_length)
         episode_scores.append(info['score'])
         episode_ghosts.append(info['ghosts'])
+        n_wins += info['win']
         count += 1
 
-    return episode_returns, episode_lengths, episode_scores, episode_ghosts
+    return episode_returns, episode_lengths, episode_scores, episode_ghosts, n_wins
 
 
 def get_results_columns(results):
