@@ -21,7 +21,7 @@ def main():
     parser.add_argument("-e", "--eval_episodes", type=int, default=40,
                         help="Number of evaluation episodes. (default: 40)")
     parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
-    parser.add_argument("--ghosts", help="Maximum number of ghosts", type=int, default=4)
+    parser.add_argument("--ghosts", help="Maximum number of ghosts", type=int, default=None)
     parser.add_argument("--level", help="difficulty level of ghosts", choices=['0', '1', '2', '3'], default='3')
     parser.add_argument("--lives", help="Number of lives", type=int, default=3)
     parser.add_argument("--timeout", help="Timeout after this amount of steps", type=int, default=3000)
@@ -53,16 +53,24 @@ def main():
 
     model = alg.load(os.path.join(log_dir, args.model_name))
 
+    n_ghosts = params['ghosts']
+    fixed_n_ghosts = False
+
+    if args.ghosts:
+        n_ghosts = args.ghosts
+        fixed_n_ghosts = True
+
     env = PacmanEnv(obs_type, params['positive_rewards'], params['agent_name'],
-                    args.map, args.ghosts, int(args.level), args.lives, args.timeout,
+                    args.map, n_ghosts, int(args.level), args.lives, args.timeout,
                     ghosts_rnd=False)
 
     eval_start_time = time.time()
 
-    episode_returns, episode_lengths, episode_scores, episode_ghosts = evaluate_policy(model, env,
-                                                                                       args.eval_episodes,
-                                                                                       deterministic=False,
-                                                                                       render=False)
+    returns, lengths, scores, ghosts, n_wins = evaluate_policy(model, env,
+                                                               args.eval_episodes,
+                                                               deterministic=False,
+                                                               fixed_n_ghosts=fixed_n_ghosts,
+                                                               render=False)
 
     eval_elapsed_time = get_formated_time(time.time() - eval_start_time)
 
@@ -70,14 +78,18 @@ def main():
     header[0] = 'ModelName'
     header[-1] = 'EvaluationEpisodes'
 
-    mean_return, std_return, max_return, min_return = get_results_columns(episode_returns)
-    mean_length, std_length, max_length, min_length = get_results_columns(episode_lengths)
-    mean_score, std_score, max_score, min_score = get_results_columns(episode_scores)
+    mean_return, std_return, max_return, min_return = get_results_columns(returns)
+    mean_length, std_length, max_length, min_length = get_results_columns(lengths)
+    mean_score, std_score, max_score, min_score = get_results_columns(scores)
 
     rows = [[args.model_name, mean_score, std_score, max_score, min_score,
              mean_return, std_return, max_return, min_return,
              mean_length, std_length, max_length, min_length,
-             np.mean(episode_ghosts), eval_elapsed_time, args.eval_episodes]]
+             np.mean(ghosts), n_wins, eval_elapsed_time, args.eval_episodes]]
+
+    if args.ghosts:
+        header.append('NGhosts')
+        rows[0].append(n_ghosts)
 
     write_rows(os.path.join(log_dir, 'test_evaluations.csv'), rows, header, mode='a')
 
