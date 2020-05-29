@@ -33,7 +33,7 @@ class PacmanEnv(gym.Env):
 
         self._game = Game(mapfile, self.max_ghosts, level_ghosts, lives, timeout)
 
-        self._pacman_obs = obs_type(self._game.map)
+        self._pacman_obs = obs_type(self._game.map, lives)
 
         self.observation_space = self._pacman_obs.space
 
