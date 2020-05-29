@@ -41,12 +41,11 @@ class MultiChannelObs(PacmanObservation):
     GHOST_CH = 3
     ZOMBIE_CH = 4
     PACMAN_CH = 5
-    LIVES_CH = 6
 
     def __init__(self, game_map, max_lives):
         super().__init__(game_map, max_lives)
 
-        self._shape = (7, self._map.ver_tiles + 1, self._map.hor_tiles)
+        self._shape = (6, self._map.ver_tiles, self._map.hor_tiles)
 
         self._obs = np.full(self._shape, self.PIXEL_EMPTY, dtype=np.uint8)
 
@@ -59,7 +58,6 @@ class MultiChannelObs(PacmanObservation):
 
         # Reset channels
         self._obs[self.EMPTY_CH][...] = self.PIXEL_IN
-        self._obs[self.EMPTY_CH][-1][...] = self.PIXEL_EMPTY
         self._obs[self.EMPTY_CH][...] -= self._obs[self.WALL_CH][...]
 
         self._obs[self.ENERGY_CH][...] = self.ENERGY_EMPTY
@@ -88,13 +86,6 @@ class MultiChannelObs(PacmanObservation):
         x, y = game_state['pacman']
         self._obs[self.PACMAN_CH][y][x] = self.PIXEL_IN
         self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
-
-        lives = game_state['lives']
-        for i in range(self._map.hor_tiles):
-            if i < lives:
-                self._obs[self.LIVES_CH][-1][i] = self.PIXEL_IN
-            else:
-                self._obs[self.LIVES_CH][-1][i] = self.PIXEL_EMPTY
 
         return self._obs
 
@@ -134,13 +125,12 @@ class SingleChannelObs(PacmanObservation):
     BOOST = 168
     GHOST_ZOMBIE = 210
     PACMAN = 255
-    LIVE = 240
 
     def __init__(self, game_map, max_lives):
         super().__init__(game_map, max_lives)
 
         # First dimension is for the image channels required by tf.nn.conv2d
-        self._shape = (1, self._map.ver_tiles + 1, self._map.hor_tiles)
+        self._shape = (1, self._map.ver_tiles, self._map.hor_tiles)
 
         self.base_obs = np.full(self._shape, self.EMPTY, dtype=np.uint8)
 
@@ -171,13 +161,6 @@ class SingleChannelObs(PacmanObservation):
 
         x, y = game_state['pacman']
         self.current_obs[0][y][x] = self.PACMAN
-
-        lives = game_state['lives']
-        for i in range(self._map.hor_tiles):
-            if i < lives:
-                self.current_obs[0][-1][i] = self.LIVE
-            else:
-                self.current_obs[0][-1][i] = self.EMPTY
 
         return self.current_obs
 
