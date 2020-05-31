@@ -12,7 +12,7 @@ from gym_observations import SingleChannelObs, MultiChannelObs
 from rl_utils.utils import get_alg, filter_tf_warnings
 
 
-async def agent_loop(model, obs_type, agent_name, server_address="localhost:8000"):
+async def agent_loop(model, obs_type, max_lives, agent_name, server_address="localhost:8000"):
     async with websockets.connect("ws://{}/player".format(server_address)) as websocket:
 
         # Receive information about static game properties
@@ -25,7 +25,7 @@ async def agent_loop(model, obs_type, agent_name, server_address="localhost:8000
 
         game_map = Map(game_properties['map'])
 
-        pacman_obs = obs_type(game_map)
+        pacman_obs = obs_type(game_map, max_lives)
 
         keys = PacmanEnv.keys
 
@@ -108,7 +108,8 @@ def main():
     SERVER = os.environ.get('SERVER', 'localhost')
     PORT = os.environ.get('PORT', '8000')
 
-    loop.run_until_complete(agent_loop(model, obs_type, params['agent_name'], "{}:{}".format(SERVER, PORT)))
+    loop.run_until_complete(agent_loop(
+        model, obs_type, params['lives'], params['agent_name'], "{}:{}".format(SERVER, PORT)))
 
 
 if __name__ == "__main__":
