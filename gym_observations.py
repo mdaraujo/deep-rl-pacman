@@ -12,6 +12,23 @@ class PacmanObservation(ABC):
         self._max_lives = max_lives
         self._shape = None
 
+        self.center_x, self.center_y = int(self._map.hor_tiles / 2), int(self._map.ver_tiles / 2)
+
+        self.pac_x, self.pac_y = None, None
+
+        self.walls = []
+
+        for y in range(self._map.ver_tiles):
+            for x in range(self._map.hor_tiles):
+                if self._map.is_wall((x, y)):
+                    self.walls.append((x, y))
+
+    def _new_x(self, x):
+        return ((x - self.pac_x) + self.center_x) % self._map.hor_tiles
+
+    def _new_y(self, y):
+        return ((y - self.pac_y) + self.center_y) % self._map.ver_tiles
+
     @property
     def space(self):
         return gym.spaces.Box(low=0, high=255, shape=self._shape, dtype=np.uint8)
@@ -40,41 +57,44 @@ class MultiChannelObs(PacmanObservation):
     ENERGY_CH = 2
     GHOST_CH = 3
     ZOMBIE_CH = 4
-    PACMAN_CH = 5
 
     def __init__(self, game_map, max_lives):
         super().__init__(game_map, max_lives)
 
-        self._shape = (6, self._map.ver_tiles, self._map.hor_tiles)
+        self._shape = (5, self._map.ver_tiles, self._map.hor_tiles)
 
         self._obs = np.full(self._shape, self.PIXEL_EMPTY, dtype=np.uint8)
-
-        for y in range(self._map.ver_tiles):
-            for x in range(self._map.hor_tiles):
-                if self._map.is_wall((x, y)):
-                    self._obs[self.WALL_CH][y][x] = self.PIXEL_IN
 
     def get_obs(self, game_state):
 
         # Reset channels
         self._obs[self.EMPTY_CH][...] = self.PIXEL_IN
-        self._obs[self.EMPTY_CH][...] -= self._obs[self.WALL_CH][...]
-
+        self._obs[self.EMPTY_CH][self.center_y][self.center_x] = self.PIXEL_EMPTY
+        self._obs[self.WALL_CH][...] = self.PIXEL_EMPTY
         self._obs[self.ENERGY_CH][...] = self.ENERGY_EMPTY
         self._obs[self.GHOST_CH][...] = self.PIXEL_EMPTY
         self._obs[self.ZOMBIE_CH][...] = self.PIXEL_EMPTY
-        self._obs[self.PACMAN_CH][...] = self.PIXEL_EMPTY
+
+        self.pac_x, self.pac_y = game_state['pacman']
+
+        for x, y in self.walls:
+            x, y = self._new_x(x), self._new_y(y)
+            self._obs[self.WALL_CH][y][x] = self.PIXEL_IN
+            self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
 
         for x, y in game_state['energy']:
+            x, y = self._new_x(x), self._new_y(y)
             self._obs[self.ENERGY_CH][y][x] = self.ENERGY_IN
             self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
 
         for x, y in game_state['boost']:
+            x, y = self._new_x(x), self._new_y(y)
             self._obs[self.ENERGY_CH][y][x] = self.BOOST_IN
             self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
 
         for ghost in game_state['ghosts']:
             x, y = ghost[0]
+            x, y = self._new_x(x), self._new_y(y)
 
             if ghost[1]:
                 self._obs[self.ZOMBIE_CH][y][x] = self.PIXEL_IN
@@ -83,10 +103,6 @@ class MultiChannelObs(PacmanObservation):
 
             self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
 
-        x, y = game_state['pacman']
-        self._obs[self.PACMAN_CH][y][x] = self.PIXEL_IN
-        self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
-
         return self._obs
 
     def render(self):
@@ -94,9 +110,7 @@ class MultiChannelObs(PacmanObservation):
             for x in range(self._map.hor_tiles):
                 color = None
 
-                if self._obs[self.PACMAN_CH][y][x] == self.PIXEL_IN:
-                    color = Back.YELLOW
-                elif self._obs[self.GHOST_CH][y][x] == self.PIXEL_IN:
+                if self._obs[self.GHOST_CH][y][x] == self.PIXEL_IN:
                     color = Back.MAGENTA
                 elif self._obs[self.ZOMBIE_CH][y][x] == self.PIXEL_IN:
                     color = Back.BLUE
@@ -108,6 +122,8 @@ class MultiChannelObs(PacmanObservation):
                     color = Back.WHITE
                 elif self._obs[self.EMPTY_CH][y][x] == self.PIXEL_IN:
                     color = Back.BLACK
+                else:
+                    color = Back.YELLOW
 
                 print(color, ' ', end='')
             print(Style.RESET_ALL)
@@ -119,12 +135,11 @@ class MultiChannelObs(PacmanObservation):
 class SingleChannelObs(PacmanObservation):
 
     GHOST = 0
-    WALL = 42
-    EMPTY = 84
-    ENERGY = 126
-    BOOST = 168
-    GHOST_ZOMBIE = 210
-    PACMAN = 255
+    WALL = 51
+    EMPTY = 102
+    ENERGY = 153
+    BOOST = 204
+    GHOST_ZOMBIE = 255
 
     def __init__(self, game_map, max_lives):
         super().__init__(game_map, max_lives)
@@ -132,52 +147,53 @@ class SingleChannelObs(PacmanObservation):
         # First dimension is for the image channels required by tf.nn.conv2d
         self._shape = (1, self._map.ver_tiles, self._map.hor_tiles)
 
-        self.base_obs = np.full(self._shape, self.EMPTY, dtype=np.uint8)
-
-        for y in range(self._map.ver_tiles):
-            for x in range(self._map.hor_tiles):
-                if self._map.is_wall((x, y)):
-                    self.base_obs[0][y][x] = self.WALL
-
-        self.current_obs = None
+        self._obs = np.full(self._shape, self.EMPTY, dtype=np.uint8)
 
     def get_obs(self, game_state):
 
-        self.current_obs = np.copy(self.base_obs)
+        self._obs[0][...] = self.EMPTY
+
+        self.pac_x, self.pac_y = game_state['pacman']
+
+        for x, y in self.walls:
+            x, y = self._new_x(x), self._new_y(y)
+            self._obs[0][y][x] = self.WALL
 
         for x, y in game_state['energy']:
-            self.current_obs[0][y][x] = self.ENERGY
+            x, y = self._new_x(x), self._new_y(y)
+            self._obs[0][y][x] = self.ENERGY
 
         for x, y in game_state['boost']:
-            self.current_obs[0][y][x] = self.BOOST
+            x, y = self._new_x(x), self._new_y(y)
+            self._obs[0][y][x] = self.BOOST
 
         for ghost in game_state['ghosts']:
             x, y = ghost[0]
+            x, y = self._new_x(x), self._new_y(y)
 
             if ghost[1]:
-                self.current_obs[0][y][x] = self.GHOST_ZOMBIE
+                self._obs[0][y][x] = self.GHOST_ZOMBIE
             else:
-                self.current_obs[0][y][x] = self.GHOST
+                self._obs[0][y][x] = self.GHOST
 
-        x, y = game_state['pacman']
-        self.current_obs[0][y][x] = self.PACMAN
-
-        return self.current_obs
+        return self._obs
 
     def render(self):
         for y in range(self._map.ver_tiles):
             for x in range(self._map.hor_tiles):
                 color = None
-                value = self.current_obs[0][y][x]
+                value = self._obs[0][y][x]
 
-                if value == self.PACMAN:
-                    color = Back.YELLOW
-                elif value == self.GHOST:
+                if value == self.GHOST:
                     color = Back.MAGENTA
                 elif value == self.GHOST_ZOMBIE:
                     color = Back.BLUE
                 elif value == self.EMPTY:
                     color = Back.BLACK
+
+                    if x == self.center_x and y == self.center_y:
+                        color = Back.YELLOW
+
                 elif value == self.WALL:
                     color = Back.WHITE
                 elif value == self.ENERGY:
@@ -188,4 +204,5 @@ class SingleChannelObs(PacmanObservation):
                 print(color, ' ', end='')
             print(Style.RESET_ALL)
 
-        # print(self.current_obs)
+        # np.set_printoptions(edgeitems=30, linewidth=100000)
+        # print(self._obs)
