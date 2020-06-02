@@ -149,6 +149,20 @@ class PlotEvalSaveCallback(BaseCallback):
                   'Training Step', '{} Last Episodes Mean Score'.format(moving_n),
                   os.path.join(self.log_dir, 'train_scores_MM.png'))
 
+        # Train ghosts
+        train_ghosts = train_results['ghosts'].tolist()
+
+        plot_line(x, train_ghosts, 'Training Episodes N Ghosts | Total Episodes: {}'.format(len(train_ghosts)),
+                  'Training Step', 'Episode N Ghosts',
+                  os.path.join(self.log_dir, 'train_ghosts.png'))
+
+        moving_ghosts = moving_average(train_ghosts, n=moving_n)
+
+        plot_line(x[moving_n-1:], moving_ghosts,
+                  'Training Episodes Ghosts Moving Mean | Total Episodes: {}'.format(len(train_ghosts)),
+                  'Training Step', '{} Last Episodes Mean Ghosts'.format(moving_n),
+                  os.path.join(self.log_dir, 'train_ghosts_MM.png'))
+
     def __enter__(self):
         return self
 
