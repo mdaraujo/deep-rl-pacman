@@ -1,6 +1,5 @@
 import random
 import json
-import numpy as np
 import gym
 
 from stable_baselines.common.env_checker import check_env
@@ -19,6 +18,8 @@ class PacmanEnv(gym.Env):
 
     MAX_ENERGY_REWARD = 1.5
     MIN_ENERGY_REWARD = 0.5
+
+    MIN_WINS = 5
 
     def __init__(self, obs_type, positive_rewards, agent_name, mapfile,
                  max_ghosts, level_ghosts, lives, timeout, ghosts_rnd=True):
@@ -50,7 +51,7 @@ class PacmanEnv(gym.Env):
         self._current_energy_reward = self.MIN_ENERGY_REWARD
 
         self.difficulty = 0.0
-        self.num_episodes = 0
+
         self.wins_count = 0
 
     def step(self, action):
@@ -63,6 +64,15 @@ class PacmanEnv(gym.Env):
 
         game_state = json.loads(self._game.state)
 
+        info = {k: game_state[k] for k in self.info_keywords if k in game_state}
+        info['ghosts'] = len(info['ghosts'])
+        info['win'] = 0
+
+        done = not self._game.running
+
+        if game_state['lives'] < self.current_lives:
+            self.current_lives = game_state['lives']
+
         reward = game_state['score'] - self._current_score
 
         if reward == POINT_ENERGY:
@@ -72,11 +82,6 @@ class PacmanEnv(gym.Env):
 
         self._current_score = game_state['score']
 
-        if game_state['lives'] < self.current_lives:
-            self.current_lives = game_state['lives']
-
-        done = not self._game.running
-
         if not self.positive_rewards:
 
             if game_state['lives'] == 0:
@@ -85,17 +90,16 @@ class PacmanEnv(gym.Env):
 
             reward -= 0.05
 
-        info = {k: game_state[k] for k in self.info_keywords if k in game_state}
-        info['ghosts'] = len(info['ghosts'])
-        info['win'] = 0
+        if done:
+            if self._game._timeout != game_state['step'] and game_state['lives'] > 0:
+                info['win'] = 1
 
-        if done and self._game._timeout != game_state['step'] and game_state['lives'] > 0:
-            info['win'] = 1
-            self.wins_count += 1
+            self.wins_count += info['win']
 
-        if info['ghosts'] == 0 and game_state['step'] >= 500:
+        if not done and info['ghosts'] == 0 and game_state['step'] >= 500:
             self._game.stop()
             done = True
+            self.wins_count += info['win']
 
         return self._pacman_obs.get_obs(game_state), reward, done, info
 
@@ -103,16 +107,11 @@ class PacmanEnv(gym.Env):
         self._current_score = 0
         self._current_energy_reward = self.MIN_ENERGY_REWARD
 
-        self.num_episodes += 1
         if self.ghosts_rnd:
 
-            if self.num_episodes > 20:
-                win_rate = self.wins_count / self.num_episodes
-                if win_rate >= 0.1:
-                    self.difficulty += 0.2
-                    print(self.num_episodes, self.wins_count, self.difficulty)
-                    self.num_episodes = 0
-                    self.wins_count = 0
+            if self.wins_count >= self.MIN_WINS:
+                self.difficulty += 0.2
+                self.wins_count = 0
 
             if random.random() < self.difficulty - int(self.difficulty):
                 n_ghosts = int(self.difficulty) + 1
