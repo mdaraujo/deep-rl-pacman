@@ -5,7 +5,7 @@ import gym
 
 from stable_baselines.common.env_checker import check_env
 
-from game import Game, POINT_ENERGY
+from game import Game, POINT_ENERGY, TIME_BONUS_STEPS
 from gym_observations import SingleChannelObs, MultiChannelObs
 
 
@@ -49,6 +49,10 @@ class PacmanEnv(gym.Env):
 
         self._current_energy_reward = self.MIN_ENERGY_REWARD
 
+        self.difficulty = 0.0
+        self.num_episodes = 0
+        self.wins_count = 0
+
     def step(self, action):
         if not self.action_space.contains(action):
             raise ValueError("Received invalid action={} which is not part of the action space.".format(action))
@@ -87,6 +91,11 @@ class PacmanEnv(gym.Env):
 
         if done and self._game._timeout != game_state['step'] and game_state['lives'] > 0:
             info['win'] = 1
+            self.wins_count += 1
+
+        if info['ghosts'] == 0 and game_state['step'] >= 500:
+            self._game.stop()
+            done = True
 
         return self._pacman_obs.get_obs(game_state), reward, done, info
 
@@ -94,12 +103,23 @@ class PacmanEnv(gym.Env):
         self._current_score = 0
         self._current_energy_reward = self.MIN_ENERGY_REWARD
 
+        self.num_episodes += 1
         if self.ghosts_rnd:
-            if self.max_ghosts == 4:
-                n_ghosts = np.random.choice([1, 2, 3, 4], replace=False, p=[0.1, 0.2, 0.3, 0.4])
-                self.set_n_ghosts(n_ghosts)
+
+            if self.num_episodes > 20:
+                win_rate = self.wins_count / self.num_episodes
+                if win_rate >= 0.1:
+                    self.difficulty += 0.2
+                    print(self.num_episodes, self.wins_count, self.difficulty)
+                    self.num_episodes = 0
+                    self.wins_count = 0
+
+            if random.random() < self.difficulty - int(self.difficulty):
+                n_ghosts = int(self.difficulty) + 1
             else:
-                self.set_n_ghosts(random.randint(1, self.max_ghosts))
+                n_ghosts = int(self.difficulty)
+
+            self.set_n_ghosts(max(min(n_ghosts, self.max_ghosts), 0))
 
         self._game.start(self.agent_name)
         self._game.compute_next_frame()
@@ -151,12 +171,7 @@ def main():
     while not done:
         env.render()
 
-        if obs_type == SingleChannelObs:
-            y_arr, x_arr = np.where(obs[0] == SingleChannelObs.PACMAN)
-        elif obs_type == MultiChannelObs:
-            y_arr, x_arr = np.where(obs[MultiChannelObs.PACMAN_CH] == MultiChannelObs.PIXEL_IN)
-
-        y, x = y_arr[0], x_arr[0]
+        x, y = env._game._pacman
 
         # Using agent from client example
         if x == cur_x and y == cur_y:
