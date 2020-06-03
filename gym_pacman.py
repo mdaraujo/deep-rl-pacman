@@ -19,7 +19,8 @@ class PacmanEnv(gym.Env):
     MAX_ENERGY_REWARD = 1.5
     MIN_ENERGY_REWARD = 0.5
 
-    MIN_WINS = 5
+    INITIAL_DIFFICULTY = 0
+    MIN_WINS = 30
 
     def __init__(self, obs_type, positive_rewards, agent_name, mapfile,
                  max_ghosts, level_ghosts, lives, timeout, ghosts_rnd=True):
@@ -50,7 +51,7 @@ class PacmanEnv(gym.Env):
 
         self._current_energy_reward = self.MIN_ENERGY_REWARD
 
-        self.difficulty = 0.0
+        self.difficulty = self.INITIAL_DIFFICULTY
 
         self.wins_count = 0
 
@@ -67,6 +68,7 @@ class PacmanEnv(gym.Env):
         info = {k: game_state[k] for k in self.info_keywords if k in game_state}
         info['ghosts'] = len(info['ghosts'])
         info['win'] = 0
+        info['d'] = self.difficulty
 
         done = not self._game.running
 
@@ -94,12 +96,15 @@ class PacmanEnv(gym.Env):
             if self._game._timeout != game_state['step'] and game_state['lives'] > 0:
                 info['win'] = 1
 
-            self.wins_count += info['win']
+            if info['ghosts'] == self.difficulty:
+                self.wins_count += info['win']
 
         if not done and info['ghosts'] == 0 and game_state['step'] >= 500:
             self._game.stop()
             done = True
-            self.wins_count += info['win']
+
+            if info['ghosts'] == self.difficulty:
+                self.wins_count += info['win']
 
         return self._pacman_obs.get_obs(game_state), reward, done, info
 
@@ -109,16 +114,21 @@ class PacmanEnv(gym.Env):
 
         if self.ghosts_rnd:
 
-            if self.wins_count >= self.MIN_WINS:
-                self.difficulty += 0.2
+            if self.difficulty < self.max_ghosts and self.wins_count >= self.MIN_WINS:
+                self.difficulty += 1
                 self.wins_count = 0
 
-            if random.random() < self.difficulty - int(self.difficulty):
-                n_ghosts = int(self.difficulty) + 1
-            else:
-                n_ghosts = int(self.difficulty)
+            easier_episode_prob = self.difficulty / 20
 
-            self.set_n_ghosts(max(min(n_ghosts, self.max_ghosts), 0))
+            if random.random() < easier_episode_prob:
+                if self.difficulty - 1 > self.INITIAL_DIFFICULTY:
+                    n_ghosts = random.randint(self.INITIAL_DIFFICULTY, self.difficulty - 1)
+                else:
+                    n_ghosts = self.INITIAL_DIFFICULTY
+            else:
+                n_ghosts = self.difficulty
+
+            self.set_n_ghosts(n_ghosts)
 
         self._game.start(self.agent_name)
         self._game.compute_next_frame()
