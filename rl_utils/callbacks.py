@@ -163,6 +163,13 @@ class PlotEvalSaveCallback(BaseCallback):
                   'Training Step', '{} Last Episodes Mean Ghosts'.format(moving_n),
                   os.path.join(self.log_dir, 'train_ghosts_MM.png'))
 
+        # Train difficulty
+        train_diff = train_results['d'].tolist()
+
+        plot_line(x, train_diff, 'Training Episodes Difficulty | Total Episodes: {}'.format(len(train_diff)),
+                  'Training Step', 'Episode Difficulty',
+                  os.path.join(self.log_dir, 'train_diff.png'))
+
     def __enter__(self):
         return self
 
