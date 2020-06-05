@@ -36,6 +36,7 @@ class PlotEvalSaveCallback(BaseCallback):
         self.best_mean_score = -np.inf
         self.best_train_step = 0
         self.train_ghosts = []
+        self.last_n_episodes = 0
 
     def _on_training_start(self):
         super()._on_training_start()
@@ -91,7 +92,11 @@ class PlotEvalSaveCallback(BaseCallback):
 
         train_results = load_results(self.log_dir)
 
-        self.train_ghosts.append(train_results['ghosts'].mean())
+        train_ghosts = train_results['ghosts'].tolist()
+
+        self.train_ghosts.append(np.mean(train_ghosts[self.last_n_episodes:]))
+
+        self.last_n_episodes = len(train_ghosts)
 
         rows = zip(self.train_steps, mean_scores, std_scores, max_scores, min_scores,
                    mean_returns, std_returns, max_returns, min_returns,
@@ -150,8 +155,6 @@ class PlotEvalSaveCallback(BaseCallback):
                   os.path.join(self.log_dir, 'train_scores_MM.png'))
 
         # Train ghosts
-        train_ghosts = train_results['ghosts'].tolist()
-
         plot_line(x, train_ghosts, 'Training Episodes N Ghosts | Total Episodes: {}'.format(len(train_ghosts)),
                   'Training Step', 'Episode N Ghosts',
                   os.path.join(self.log_dir, 'train_ghosts.png'))
