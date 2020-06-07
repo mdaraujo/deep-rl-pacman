@@ -20,7 +20,7 @@ class PacmanEnv(gym.Env):
     MIN_ENERGY_REWARD = 0.5
 
     INITIAL_DIFFICULTY = 0
-    MIN_WINS = 30
+    MIN_WINS = 200
 
     def __init__(self, obs_type, positive_rewards, agent_name, mapfile,
                  max_ghosts, level_ghosts, lives, timeout, ghosts_rnd=True):
@@ -77,10 +77,10 @@ class PacmanEnv(gym.Env):
 
         reward = game_state['score'] - self._current_score
 
-        if reward == POINT_ENERGY:
-            reward = self._current_energy_reward
-            self._current_energy_reward += self.energy_reward_increment
-            # print(self.total_energy - len(game_state['energy']), reward)
+        # if reward == POINT_ENERGY:
+        #     reward = self._current_energy_reward
+        #     self._current_energy_reward += self.energy_reward_increment
+        #     # print(self.total_energy - len(game_state['energy']), reward)
 
         self._current_score = game_state['score']
 
