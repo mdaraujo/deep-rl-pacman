@@ -35,7 +35,7 @@ if __name__ == "__main__":
                         help="Discount factor. (default: 0.99)")
     parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
     parser.add_argument("--ghosts", help="Maximum number of ghosts", type=int, default=4)
-    parser.add_argument("--level", help="difficulty level of ghosts", choices=['0', '1', '2', '3'], default='3')
+    parser.add_argument("--level", help="difficulty level of ghosts", choices=['0', '1', '2', '3'], default='1')
     parser.add_argument("--lives", help="Number of lives", type=int, default=3)
     parser.add_argument("--timeout", help="Timeout after this amount of steps", type=int, default=3000)
     args = parser.parse_args()

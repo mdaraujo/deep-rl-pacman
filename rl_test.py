@@ -22,7 +22,7 @@ def main():
                         help="Number of evaluation episodes. (default: 40)")
     parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
     parser.add_argument("--ghosts", help="Maximum number of ghosts", type=int, default=None)
-    parser.add_argument("--level", help="difficulty level of ghosts", choices=['0', '1', '2', '3'], default='3')
+    parser.add_argument("--level", help="difficulty level of ghosts", choices=['0', '1', '2', '3'], default=None)
     parser.add_argument("--lives", help="Number of lives", type=int, default=3)
     parser.add_argument("--timeout", help="Timeout after this amount of steps", type=int, default=3000)
     args = parser.parse_args()
@@ -60,8 +60,13 @@ def main():
         n_ghosts = args.ghosts
         fixed_n_ghosts = True
 
+    ghosts_level = params['level']
+
+    if args.level:
+        ghosts_level = int(args.level)
+
     env = PacmanEnv(obs_type, params['positive_rewards'], params['agent_name'],
-                    args.map, n_ghosts, int(args.level), args.lives, args.timeout,
+                    args.map, n_ghosts, ghosts_level, args.lives, args.timeout,
                     ghosts_rnd=False)
 
     eval_start_time = time.time()
@@ -90,6 +95,10 @@ def main():
     if args.ghosts:
         header.append('NGhosts')
         rows[0].append(n_ghosts)
+
+    if args.level:
+        header.append('Level')
+        rows[0].append(ghosts_level)
 
     write_rows(os.path.join(log_dir, 'test_evaluations.csv'), rows, header, mode='a')
 
