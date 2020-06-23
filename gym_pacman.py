@@ -1,6 +1,7 @@
 import random
 import json
 import gym
+import numpy as np
 
 from stable_baselines.common.env_checker import check_env
 
@@ -87,14 +88,17 @@ class PacmanEnv(gym.Env):
         if not self.positive_rewards:
 
             if game_state['lives'] == 0:
-                # reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
-                reward -= 120
+                reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
 
-            reward -= 0.05
+            reward -= 1.0 / TIME_BONUS_STEPS
 
         if done:
             if self._game._timeout != game_state['step'] and game_state['lives'] > 0:
                 info['win'] = 1
+
+                if not self.positive_rewards:
+                    reward = POINT_ENERGY
+                    reward -= 1.0 / TIME_BONUS_STEPS
 
             if info['ghosts'] == self.difficulty:
                 self.wins_count += info['win']
@@ -102,6 +106,9 @@ class PacmanEnv(gym.Env):
         if not done and info['ghosts'] == 0 and game_state['step'] >= 500:
             self._game.stop()
             done = True
+
+            if not self.positive_rewards:
+                reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
 
             if info['ghosts'] == self.difficulty:
                 self.wins_count += info['win']
@@ -114,21 +121,23 @@ class PacmanEnv(gym.Env):
 
         if self.ghosts_rnd:
 
-            if self.difficulty < self.max_ghosts and self.wins_count >= self.MIN_WINS:
-                self.difficulty += 1
-                self.wins_count = 0
+            self.set_n_ghosts(random.randint(0, self.max_ghosts))
 
-            easier_episode_prob = self.difficulty / 20
+            # if self.difficulty < self.max_ghosts and self.wins_count >= self.MIN_WINS:
+            #     self.difficulty += 1
+            #     self.wins_count = 0
 
-            if random.random() < easier_episode_prob:
-                if self.difficulty - 1 > self.INITIAL_DIFFICULTY:
-                    n_ghosts = random.randint(self.INITIAL_DIFFICULTY, self.difficulty - 1)
-                else:
-                    n_ghosts = self.INITIAL_DIFFICULTY
-            else:
-                n_ghosts = self.difficulty
+            # easier_episode_prob = self.difficulty / 20
 
-            self.set_n_ghosts(n_ghosts)
+            # if random.random() < easier_episode_prob:
+            #     if self.difficulty - 1 > self.INITIAL_DIFFICULTY:
+            #         n_ghosts = random.randint(self.INITIAL_DIFFICULTY, self.difficulty - 1)
+            #     else:
+            #         n_ghosts = self.INITIAL_DIFFICULTY
+            # else:
+            #     n_ghosts = self.difficulty
+
+            # self.set_n_ghosts(n_ghosts)
 
         self._game.start(self.agent_name)
         self._game.compute_next_frame()
