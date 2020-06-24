@@ -25,7 +25,11 @@ def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, fixed_n_
     if isinstance(env, VecEnv):
         assert env.num_envs == 1, "You must pass only one environment when using this function"
 
-    change_ghosts_ep = n_eval_episodes / env.max_ghosts
+    change_ghosts_ep = n_eval_episodes
+
+    if env.max_ghosts > 0:
+        change_ghosts_ep /= env.max_ghosts
+
     n_ghosts = 1
     count = 0
 
