@@ -18,8 +18,8 @@ def main():
                         help="Use latest dir inside 'logdir' (default: run for 'logdir')")
     parser.add_argument('-m', '--model_name', type=str, default="best_model",
                         help="Model file name (default: best_model)")
-    parser.add_argument("-e", "--eval_episodes", type=int, default=40,
-                        help="Number of evaluation episodes. (default: 40)")
+    parser.add_argument("-e", "--eval_episodes", type=int, default=80,
+                        help="Number of evaluation episodes. (default: 80)")
     parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
     parser.add_argument("--ghosts", help="Maximum number of ghosts", type=int, default=None)
     parser.add_argument("--level", help="difficulty level of ghosts", choices=['0', '1', '2', '3'], default=None)
@@ -56,7 +56,7 @@ def main():
     n_ghosts = params['ghosts']
     fixed_n_ghosts = False
 
-    if args.ghosts:
+    if args.ghosts is not None:
         n_ghosts = args.ghosts
         fixed_n_ghosts = True
 
@@ -92,7 +92,7 @@ def main():
              mean_length, std_length, max_length, min_length,
              np.mean(ghosts), n_wins, eval_elapsed_time, args.eval_episodes]]
 
-    if args.ghosts:
+    if args.ghosts is not None:
         header.append('NGhosts')
         rows[0].append(n_ghosts)
 

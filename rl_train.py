@@ -23,8 +23,8 @@ if __name__ == "__main__":
                         help="Total timesteps (default: 20000)")
     parser.add_argument("-f", "--eval_freq", type=int, default=None,
                         help="Number of callback calls between evaluations. (default: timesteps/10)")
-    parser.add_argument("-e", "--eval_episodes", type=int, default=40,
-                        help="Number of evaluation episodes. (default: 40)")
+    parser.add_argument("-e", "--eval_episodes", type=int, default=80,
+                        help="Number of evaluation episodes. (default: 80)")
     parser.add_argument("-tb", "--tensorboard", default=None,
                         help="Tensorboard logdir. (default: None)")
     parser.add_argument("-s", "--single_channel_obs", action="store_true",
