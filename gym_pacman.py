@@ -73,9 +73,6 @@ class PacmanEnv(gym.Env):
 
         done = not self._game.running
 
-        if game_state['lives'] < self.current_lives:
-            self.current_lives = game_state['lives']
-
         reward = game_state['score'] - self._current_score
 
         # if reward == POINT_ENERGY:
@@ -102,6 +99,10 @@ class PacmanEnv(gym.Env):
 
             if info['ghosts'] == self.difficulty:
                 self.wins_count += info['win']
+
+        if game_state['lives'] < self.current_lives:
+            reward -= 100
+            self.current_lives = game_state['lives']
 
         if not done and info['ghosts'] == 0 and game_state['step'] >= 500:
             self._game.stop()
@@ -166,7 +167,7 @@ def main():
 
     obs_type = MultiChannelObs
 
-    positive_rewards = False
+    positive_rewards = True
 
     env = PacmanEnv(obs_type, positive_rewards, agent_name, mapfile, ghosts, level_ghosts, lives, timeout)
     print("Checking environment...")
@@ -222,6 +223,10 @@ def main():
         #             np.isin(MultiChannelObs.PIXEL_IN, obs[MultiChannelObs.ZOMBIE_CH])):
         #     env.render()
         #     print("Zombie")
+        #     break
+
+        # if info['lives'] == 1:
+        #     print("Lives: 1")
         #     break
 
     # print("score:", sum_rewards + (env._game._timeout / TIME_BONUS_STEPS))
