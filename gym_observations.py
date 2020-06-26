@@ -57,11 +57,12 @@ class MultiChannelObs(PacmanObservation):
     ENERGY_CH = 2
     GHOST_CH = 3
     ZOMBIE_CH = 4
+    LIVES_CH = 5
 
     def __init__(self, game_map, max_lives):
         super().__init__(game_map, max_lives)
 
-        self._shape = (5, self._map.ver_tiles, self._map.hor_tiles)
+        self._shape = (6, self._map.ver_tiles, self._map.hor_tiles)
 
         self._obs = np.full(self._shape, self.PIXEL_EMPTY, dtype=np.uint8)
 
@@ -74,6 +75,7 @@ class MultiChannelObs(PacmanObservation):
         self._obs[self.ENERGY_CH][...] = self.ENERGY_EMPTY
         self._obs[self.GHOST_CH][...] = self.PIXEL_EMPTY
         self._obs[self.ZOMBIE_CH][...] = self.PIXEL_EMPTY
+        self._obs[self.LIVES_CH][...] = self.PIXEL_EMPTY
 
         self.pac_x, self.pac_y = game_state['pacman']
 
@@ -102,6 +104,9 @@ class MultiChannelObs(PacmanObservation):
                 self._obs[self.GHOST_CH][y][x] = self.PIXEL_IN
 
             self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
+
+        lives_y_fill = int(game_state['lives'] * (self._map.ver_tiles / self._max_lives))
+        self._obs[self.LIVES_CH][:lives_y_fill][...] = self.PIXEL_IN
 
         return self._obs
 
