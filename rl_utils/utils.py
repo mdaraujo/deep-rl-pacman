@@ -133,6 +133,15 @@ def write_rows(outfile, rows, header, mode='w'):
             writer.writerow(new_row)
 
 
+def human_format(num):
+    num = float('{:.3g}'.format(num))
+    magnitude = 0
+    while abs(num) >= 1000:
+        magnitude += 1
+        num /= 1000.0
+    return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
+
+
 def get_alg(alg_name):
 
     if alg_name == "PPO":

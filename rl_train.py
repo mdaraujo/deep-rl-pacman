@@ -8,7 +8,7 @@ from stable_baselines.bench import Monitor
 
 from gym_pacman import PacmanEnv
 from gym_observations import SingleChannelObs, MultiChannelObs
-from rl_utils.utils import get_alg, filter_tf_warnings
+from rl_utils.utils import get_alg, filter_tf_warnings, human_format
 from rl_utils.callbacks import PlotEvalSaveCallback
 from rl_utils.cnn_extractor import pacman_cnn
 
@@ -72,9 +72,11 @@ if __name__ == "__main__":
 
     base_dir = "{}_{}_{}".format(alg_name, obs_type.__name__[:4], rewards_str)
 
-    dir_name = "{}/{}_{}_{}_{}".format(base_dir,
-                                       agent_id, base_dir, args.gamma,
-                                       now.strftime('%y%m%d-%H%M%S'))
+    dir_name = "{}/{}_{}_{}_{}_{}".format(base_dir,
+                                          agent_id, base_dir,
+                                          human_format(args.timesteps),
+                                          args.gamma,
+                                          now.strftime('%y%m%d-%H%M%S'))
 
     log_dir = os.path.join(LOGS_BASE_DIR, dir_name)
 
