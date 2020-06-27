@@ -104,15 +104,15 @@ class PacmanEnv(gym.Env):
             reward -= 100
             self.current_lives = game_state['lives']
 
-        if not done and info['ghosts'] == 0 and game_state['step'] >= 500:
-            self._game.stop()
-            done = True
+        # if not done and info['ghosts'] == 0 and game_state['step'] >= 500:
+        #     self._game.stop()
+        #     done = True
 
-            if not self.positive_rewards:
-                reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
+        #     if not self.positive_rewards:
+        #         reward -= (self._game._timeout - game_state['step'] + 1) * (1.0 / TIME_BONUS_STEPS)
 
-            if info['ghosts'] == self.difficulty:
-                self.wins_count += info['win']
+        #     if info['ghosts'] == self.difficulty:
+        #         self.wins_count += info['win']
 
         return self._pacman_obs.get_obs(game_state), reward, done, info
 
@@ -122,7 +122,7 @@ class PacmanEnv(gym.Env):
 
         if self.ghosts_rnd:
 
-            self.set_n_ghosts(random.randint(0, self.max_ghosts))
+            self.set_n_ghosts(random.randint(1, self.max_ghosts))
 
             # if self.difficulty < self.max_ghosts and self.wins_count >= self.MIN_WINS:
             #     self.difficulty += 1
