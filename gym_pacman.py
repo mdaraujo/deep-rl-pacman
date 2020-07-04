@@ -46,6 +46,8 @@ class PacmanEnv(gym.Env):
 
         self.current_lives = self._game._initial_lives
 
+        self._last_pos = None
+
         self.total_energy = len(self._game.map.energy)
 
         self.energy_reward_increment = (self.MAX_ENERGY_REWARD - self.MIN_ENERGY_REWARD) / (self.total_energy - 1)
@@ -101,8 +103,14 @@ class PacmanEnv(gym.Env):
                 self.wins_count += info['win']
 
         if game_state['lives'] < self.current_lives:
-            reward -= 100
+            reward -= 50
             self.current_lives = game_state['lives']
+
+        if self._last_pos:
+            if game_state['pacman'] == self._last_pos:
+                reward -= 0.5
+
+        self._last_pos = game_state['pacman']
 
         # if not done and info['ghosts'] == 0 and game_state['step'] >= 500:
         #     self._game.stop()
@@ -118,6 +126,7 @@ class PacmanEnv(gym.Env):
 
     def reset(self):
         self._current_score = 0
+        self._last_pos = None
         self._current_energy_reward = self.MIN_ENERGY_REWARD
 
         if self.ghosts_rnd:
