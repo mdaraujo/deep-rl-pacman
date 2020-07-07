@@ -18,8 +18,8 @@ def main():
                         help="Use latest dir inside 'logdir' (default: run for 'logdir')")
     parser.add_argument('-m', '--model_name', type=str, default="best_model",
                         help="Model file name (default: best_model)")
-    parser.add_argument("-e", "--eval_episodes", type=int, default=80,
-                        help="Number of evaluation episodes. (default: 80)")
+    parser.add_argument("-e", "--eval_episodes", type=int, default=100,
+                        help="Number of evaluation episodes. (default: 100)")
     parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
     parser.add_argument("--ghosts", help="Maximum number of ghosts", type=int, default=None)
     parser.add_argument("--level", help="difficulty level of ghosts", choices=['0', '1', '2', '3'], default=None)
@@ -54,32 +54,32 @@ def main():
     model = alg.load(os.path.join(log_dir, args.model_name))
 
     n_ghosts = params['ghosts']
-    fixed_n_ghosts = False
+    ghosts_level = params['level']
+    fixed_params = False
 
     if args.ghosts is not None:
         n_ghosts = args.ghosts
-        fixed_n_ghosts = True
+        fixed_params = True
 
-    ghosts_level = params['level']
-
-    if args.level:
+    if args.level is not None:
         ghosts_level = int(args.level)
+        fixed_params = True
 
     env = PacmanEnv(obs_type, params['positive_rewards'], params['agent_name'],
                     args.map, n_ghosts, ghosts_level, args.lives, args.timeout,
-                    ghosts_rnd=False)
+                    fixed_params=True)
 
     eval_start_time = time.time()
 
-    returns, lengths, scores, ghosts, n_wins = evaluate_policy(model, env,
-                                                               args.eval_episodes,
-                                                               deterministic=False,
-                                                               fixed_n_ghosts=fixed_n_ghosts,
-                                                               render=False)
+    returns, lengths, scores, ghosts, levels, n_wins = evaluate_policy(model, env,
+                                                                       args.eval_episodes,
+                                                                       deterministic=False,
+                                                                       fixed_params=fixed_params,
+                                                                       render=False)
 
     eval_elapsed_time = get_formated_time(time.time() - eval_start_time)
 
-    header = EVAL_HEADER.copy()
+    header = EVAL_HEADER.copy()[:-1]
     header[0] = 'ModelName'
     header[-1] = 'EvaluationEpisodes'
 
@@ -90,13 +90,11 @@ def main():
     rows = [[args.model_name, mean_score, std_score, max_score, min_score,
              mean_return, std_return, max_return, min_return,
              mean_length, std_length, max_length, min_length,
-             np.mean(ghosts), n_wins, eval_elapsed_time, args.eval_episodes]]
+             np.mean(ghosts), np.mean(levels), n_wins, eval_elapsed_time, args.eval_episodes]]
 
-    if args.ghosts is not None:
+    if args.ghosts is not None or args.level is not None:
         header.append('NGhosts')
         rows[0].append(n_ghosts)
-
-    if args.level:
         header.append('Level')
         rows[0].append(ghosts_level)
 

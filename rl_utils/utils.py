@@ -8,14 +8,17 @@ import matplotlib.pyplot as plt
 from stable_baselines import PPO2, DQN
 from stable_baselines.common.vec_env import VecEnv
 
+from gym_pacman import ENV_PARAMS
+
 
 EVAL_HEADER = ["TrainStep", "MeanScore", "StdScore", "MaxScore", "MinScore",
                "MeanReturn", "StdReturn", "MaxReturn", "MinReturn",
                "MeanLength", "StdLength", "MaxLength", "MinLength",
-               "EvalGhostsMean", "Wins", "EvaluationTime", "TrainGhostsMean"]
+               "EvalGhostsMean", "EvalLevelMean", "Wins", "EvaluationTime",
+               "TrainGhostsMean", "TrainLevelMean"]
 
 
-def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, fixed_n_ghosts=False, render=False):
+def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, fixed_params=False, render=False):
     """
     Runs policy for `n_eval_episodes` episodes and returns episodes returns, lengths and scores.
     This is made to work only with one env.
@@ -25,27 +28,27 @@ def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, fixed_n_
     if isinstance(env, VecEnv):
         assert env.num_envs == 1, "You must pass only one environment when using this function"
 
-    change_ghosts_ep = n_eval_episodes
+    change_params_ep = n_eval_episodes
 
-    if env.max_ghosts > 0:
-        change_ghosts_ep /= env.max_ghosts
+    if ENV_PARAMS:
+        change_params_ep /= len(ENV_PARAMS)
 
-    n_ghosts = 1
+    params_idx = 0
     count = 0
 
-    episode_returns, episode_lengths, episode_scores, episode_ghosts = [], [], [], []
+    episode_returns, episode_lengths, episode_scores, episode_ghosts, episode_levels = [], [], [], [], []
 
     n_wins = 0
 
     for _ in range(n_eval_episodes):
 
-        if not fixed_n_ghosts:
+        if not fixed_params:
 
-            if count >= change_ghosts_ep:
+            if count >= change_params_ep:
                 count = 0
-                n_ghosts += 1
+                params_idx += 1
 
-            env.set_n_ghosts(n_ghosts)
+            env.set_env_params(ENV_PARAMS[params_idx])
 
         obs = env.reset()
         done, state = False, None
@@ -62,10 +65,11 @@ def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, fixed_n_
         episode_lengths.append(episode_length)
         episode_scores.append(info['score'])
         episode_ghosts.append(info['ghosts'])
+        episode_levels.append(info['level'])
         n_wins += info['win']
         count += 1
 
-    return episode_returns, episode_lengths, episode_scores, episode_ghosts, n_wins
+    return episode_returns, episode_lengths, episode_scores, episode_ghosts, episode_levels, n_wins
 
 
 def get_results_columns(results):
@@ -128,8 +132,8 @@ def write_rows(outfile, rows, header, mode='w'):
             writer.writerow(header)
 
         for row in rows:
-            new_row = [format(x, '6.1f') if isinstance(x, float) or isinstance(x, np.float32) else x for x in row]
-            new_row = [format(x, '8d') if isinstance(x, int) else x for x in new_row]
+            new_row = [format(x, '7.1f') if isinstance(x, float) or isinstance(x, np.float32) else x for x in row]
+            new_row = [format(x, '4d') if isinstance(x, int) else x for x in new_row]
             writer.writerow(new_row)
 
 

@@ -1,3 +1,4 @@
+from collections import namedtuple
 import random
 import json
 import gym
@@ -9,13 +10,30 @@ from game import Game, POINT_ENERGY, TIME_BONUS_STEPS
 from gym_observations import SingleChannelObs, MultiChannelObs
 
 
+class EnvParams:
+    def __init__(self, ghosts, level):
+        self._ghosts = ghosts
+        self._level = level
+
+    @property
+    def ghosts(self):
+        return self._ghosts
+
+    @property
+    def level(self):
+        return self._level
+
+
+ENV_PARAMS = [EnvParams(1, 1), EnvParams(2, 2), EnvParams(4, 0), EnvParams(4, 1), EnvParams(4, 2)]
+
+
 class PacmanEnv(gym.Env):
 
     metadata = {'render.modes': ['human']}
 
     keys = {0: 'w', 1: 'a', 2: 's', 3: 'd'}
 
-    info_keywords = ('step', 'score', 'lives', 'ghosts')
+    info_keywords = ('step', 'score', 'lives')
 
     MAX_ENERGY_REWARD = 1.5
     MIN_ENERGY_REWARD = 0.5
@@ -24,17 +42,15 @@ class PacmanEnv(gym.Env):
     MIN_WINS = 200
 
     def __init__(self, obs_type, positive_rewards, agent_name, mapfile,
-                 max_ghosts, level_ghosts, lives, timeout, ghosts_rnd=True):
+                 ghosts, level_ghosts, lives, timeout, fixed_params=False):
 
         self.positive_rewards = positive_rewards
 
         self.agent_name = agent_name
 
-        self.max_ghosts = max_ghosts
+        self.fixed_params = fixed_params
 
-        self.ghosts_rnd = ghosts_rnd
-
-        self._game = Game(mapfile, self.max_ghosts, level_ghosts, lives, timeout)
+        self._game = Game(mapfile, ghosts, level_ghosts, lives, timeout)
 
         self._pacman_obs = obs_type(self._game.map, lives)
 
@@ -47,6 +63,8 @@ class PacmanEnv(gym.Env):
         self.current_lives = self._game._initial_lives
 
         self._last_pos = None
+
+        self._current_params = EnvParams(ghosts, level_ghosts)
 
         self.total_energy = len(self._game.map.energy)
 
@@ -69,7 +87,8 @@ class PacmanEnv(gym.Env):
         game_state = json.loads(self._game.state)
 
         info = {k: game_state[k] for k in self.info_keywords if k in game_state}
-        info['ghosts'] = len(info['ghosts'])
+        info['ghosts'] = self._current_params.ghosts
+        info['level'] = self._current_params.level
         info['win'] = 0
         info['d'] = self.difficulty
 
@@ -129,9 +148,11 @@ class PacmanEnv(gym.Env):
         self._last_pos = None
         self._current_energy_reward = self.MIN_ENERGY_REWARD
 
-        if self.ghosts_rnd:
+        if not self.fixed_params:
 
-            self.set_n_ghosts(random.randint(1, self.max_ghosts))
+            self._current_params = random.choice(ENV_PARAMS)
+
+            self.set_env_params(self._current_params)
 
             # if self.difficulty < self.max_ghosts and self.wins_count >= self.MIN_WINS:
             #     self.difficulty += 1
@@ -155,8 +176,10 @@ class PacmanEnv(gym.Env):
         game_state = json.loads(self._game.state)
         return self._pacman_obs.get_obs(game_state)
 
-    def set_n_ghosts(self, n_ghosts):
-        self._game._n_ghosts = n_ghosts
+    def set_env_params(self, env_params):
+        self._current_params = env_params
+        self._game._n_ghosts = env_params.ghosts
+        self._game._l_ghosts = env_params.level
 
     def render(self, mode='human'):
         self._pacman_obs.render()
