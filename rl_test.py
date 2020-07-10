@@ -71,11 +71,11 @@ def main():
 
     eval_start_time = time.time()
 
-    returns, lengths, scores, ghosts, levels, n_wins = evaluate_policy(model, env,
-                                                                       args.eval_episodes,
-                                                                       deterministic=False,
-                                                                       fixed_params=fixed_params,
-                                                                       render=False)
+    returns, lengths, scores, idle_steps, ghosts, levels, n_wins = evaluate_policy(model, env,
+                                                                                   args.eval_episodes,
+                                                                                   deterministic=False,
+                                                                                   fixed_params=fixed_params,
+                                                                                   render=False)
 
     eval_elapsed_time = get_formated_time(time.time() - eval_start_time)
 
@@ -90,7 +90,9 @@ def main():
     rows = [[args.model_name, mean_score, std_score, max_score, min_score,
              mean_return, std_return, max_return, min_return,
              mean_length, std_length, max_length, min_length,
-             np.mean(ghosts), np.mean(levels), n_wins, eval_elapsed_time, args.eval_episodes]]
+             np.mean(idle_steps), np.sum(np.asarray(idle_steps) > 0),
+             np.mean(ghosts), np.mean(levels), n_wins,
+             eval_elapsed_time, args.eval_episodes]]
 
     if args.ghosts is not None or args.level is not None:
         header.append('NGhosts')

@@ -30,6 +30,8 @@ class PlotEvalSaveCallback(BaseCallback):
         self.returns_columns = []
         self.lengths_columns = []
         self.scores_columns = []
+        self.evals_idle_mean = []
+        self.evals_idle_eps = []
         self.evals_elapsed_time = []
         self.evals_ghosts_mean = []
         self.evals_levels_mean = []
@@ -62,16 +64,18 @@ class PlotEvalSaveCallback(BaseCallback):
     def eval_save_plot(self):
         eval_start_time = time.time()
 
-        returns, lengths, scores, ghosts, levels, n_wins = evaluate_policy(self.model, self.eval_env,
-                                                                           self.n_eval_episodes,
-                                                                           self.deterministic,
-                                                                           render=False)
+        returns, lengths, scores, idle_steps, ghosts, levels, n_wins = evaluate_policy(self.model, self.eval_env,
+                                                                                       self.n_eval_episodes,
+                                                                                       self.deterministic,
+                                                                                       render=False)
 
         eval_elapsed_time = get_formated_time(time.time() - eval_start_time)
 
         returns_columns = get_results_columns(returns)
         lengths_columns = get_results_columns(lengths)
         scores_columns = get_results_columns(scores)
+        self.evals_idle_mean.append(np.mean(idle_steps))
+        self.evals_idle_eps.append(np.sum(np.asarray(idle_steps) > 0))
         self.evals_ghosts_mean.append(np.mean(ghosts))
         self.evals_levels_mean.append(np.mean(levels))
         self.evals_n_wins.append(n_wins)
@@ -108,6 +112,7 @@ class PlotEvalSaveCallback(BaseCallback):
         rows = zip(self.train_steps, mean_scores, std_scores, max_scores, min_scores,
                    mean_returns, std_returns, max_returns, min_returns,
                    mean_lengths, std_lengths, max_lengths, min_lengths,
+                   self.evals_idle_mean, self.evals_idle_eps,
                    self.evals_ghosts_mean, self.evals_levels_mean, self.evals_n_wins,
                    self.evals_elapsed_time, self.train_ghosts, self.train_levels)
 

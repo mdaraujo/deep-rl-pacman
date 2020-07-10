@@ -14,6 +14,7 @@ from gym_pacman import ENV_PARAMS
 EVAL_HEADER = ["TrainStep", "MeanScore", "StdScore", "MaxScore", "MinScore",
                "MeanReturn", "StdReturn", "MaxReturn", "MinReturn",
                "MeanLength", "StdLength", "MaxLength", "MinLength",
+               "EvalIdleStepsMean", "EvalIdleEps",
                "EvalGhostsMean", "EvalLevelMean", "Wins", "EvaluationTime",
                "TrainGhostsMean", "TrainLevelMean"]
 
@@ -36,7 +37,7 @@ def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, fixed_pa
     params_idx = 0
     count = 0
 
-    episode_returns, episode_lengths, episode_scores, episode_ghosts, episode_levels = [], [], [], [], []
+    returns, lengths, scores, idle_steps, ghosts, levels = [], [], [], [], [], []
 
     n_wins = 0
 
@@ -53,23 +54,24 @@ def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, fixed_pa
         obs = env.reset()
         done, state = False, None
         episode_return = 0.0
-        episode_length = 0
+        length = 0
         while not done:
             action, state = model.predict(obs, state=state, deterministic=deterministic)
             obs, reward, done, info = env.step(action)
             episode_return += reward
-            episode_length += 1
+            length += 1
             if render:
                 env.render()
-        episode_returns.append(episode_return)
-        episode_lengths.append(episode_length)
-        episode_scores.append(info['score'])
-        episode_ghosts.append(info['ghosts'])
-        episode_levels.append(info['level'])
+        returns.append(episode_return)
+        lengths.append(length)
+        scores.append(info['score'])
+        ghosts.append(info['ghosts'])
+        levels.append(info['level'])
+        idle_steps.append(info['idle'])
         n_wins += info['win']
         count += 1
 
-    return episode_returns, episode_lengths, episode_scores, episode_ghosts, episode_levels, n_wins
+    return returns, lengths, scores, idle_steps, ghosts, levels, n_wins
 
 
 def get_results_columns(results):
