@@ -7,34 +7,40 @@ from colorama import Back, Style
 
 class PacmanObservation(ABC):
 
-    def __init__(self, game_map, max_lives):
-        self._map = game_map
+    def __init__(self, maps_list, max_lives):
         self._max_lives = max_lives
         self._shape = None
 
-        self.center_x, self.center_y = int(self._map.hor_tiles / 2), int(self._map.ver_tiles / 2)
+        self.center_x, self.center_y = None, None
 
         self.pac_x, self.pac_y = None, None
 
-        self.walls = []
+        self.walls = {}
 
-        for y in range(self._map.ver_tiles):
-            for x in range(self._map.hor_tiles):
-                if self._map.is_wall((x, y)):
-                    self.walls.append((x, y))
+        self.width = max(mapa.hor_tiles for mapa in maps_list)
+        self.height = max(mapa.ver_tiles for mapa in maps_list)
+
+        for y in range(self.height):
+            for x in range(self.width):
+                for mapa in maps_list:
+                    if mapa.is_wall((x, y)):
+                        if mapa.filename in self.walls:
+                            self.walls[mapa.filename].append((x, y))
+                        else:
+                            self.walls[mapa.filename] = [(x, y)]
 
     def _new_x(self, x):
-        return ((x - self.pac_x) + self.center_x) % self._map.hor_tiles
+        return ((x - self.pac_x) + self.center_x) % self.width
 
     def _new_y(self, y):
-        return ((y - self.pac_y) + self.center_y) % self._map.ver_tiles
+        return ((y - self.pac_y) + self.center_y) % self.height
 
     @property
     def space(self):
         return gym.spaces.Box(low=0, high=255, shape=self._shape, dtype=np.uint8)
 
     @abstractmethod
-    def get_obs(self, game_state):
+    def get_obs(self, game_state, mapa):
         pass
 
     @abstractmethod
@@ -62,11 +68,13 @@ class MultiChannelObs(PacmanObservation):
     def __init__(self, game_map, max_lives):
         super().__init__(game_map, max_lives)
 
-        self._shape = (6, self._map.ver_tiles, self._map.hor_tiles)
+        self._shape = (6, self.height, self.width)
 
         self._obs = np.full(self._shape, self.PIXEL_EMPTY, dtype=np.uint8)
 
-    def get_obs(self, game_state):
+    def get_obs(self, game_state, mapa):
+
+        self.center_x, self.center_y = int(mapa.hor_tiles / 2), int(mapa.ver_tiles / 2)
 
         # Reset channels
         self._obs[self.EMPTY_CH][...] = self.PIXEL_IN
@@ -79,7 +87,7 @@ class MultiChannelObs(PacmanObservation):
 
         self.pac_x, self.pac_y = game_state['pacman']
 
-        for x, y in self.walls:
+        for x, y in self.walls[mapa.filename]:
             x, y = self._new_x(x), self._new_y(y)
             self._obs[self.WALL_CH][y][x] = self.PIXEL_IN
             self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
@@ -105,14 +113,14 @@ class MultiChannelObs(PacmanObservation):
 
             self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
 
-        lives_y_fill = int(game_state['lives'] * (self._map.ver_tiles / self._max_lives))
+        lives_y_fill = int(game_state['lives'] * (self.height / self._max_lives))
         self._obs[self.LIVES_CH][:lives_y_fill][...] = self.PIXEL_IN
 
         return self._obs
 
     def render(self):
-        for y in range(self._map.ver_tiles):
-            for x in range(self._map.hor_tiles):
+        for y in range(self.height):
+            for x in range(self.width):
                 color = None
 
                 if self._obs[self.GHOST_CH][y][x] == self.PIXEL_IN:
@@ -150,17 +158,19 @@ class SingleChannelObs(PacmanObservation):
         super().__init__(game_map, max_lives)
 
         # First dimension is for the image channels required by tf.nn.conv2d
-        self._shape = (1, self._map.ver_tiles, self._map.hor_tiles)
+        self._shape = (1, self.height, self.width)
 
         self._obs = np.full(self._shape, self.EMPTY, dtype=np.uint8)
 
-    def get_obs(self, game_state):
+    def get_obs(self, game_state, mapa):
+
+        self.center_x, self.center_y = int(mapa.hor_tiles / 2), int(mapa.ver_tiles / 2)
 
         self._obs[0][...] = self.EMPTY
 
         self.pac_x, self.pac_y = game_state['pacman']
 
-        for x, y in self.walls:
+        for x, y in self.walls[mapa.filename]:
             x, y = self._new_x(x), self._new_y(y)
             self._obs[0][y][x] = self.WALL
 
@@ -184,8 +194,8 @@ class SingleChannelObs(PacmanObservation):
         return self._obs
 
     def render(self):
-        for y in range(self._map.ver_tiles):
-            for x in range(self._map.hor_tiles):
+        for y in range(self.height):
+            for x in range(self.width):
                 color = None
                 value = self._obs[0][y][x]
 

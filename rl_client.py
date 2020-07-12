@@ -25,7 +25,7 @@ async def agent_loop(model, obs_type, max_lives, agent_name, server_address="loc
 
         game_map = Map(game_properties['map'])
 
-        pacman_obs = obs_type(game_map, max_lives)
+        pacman_obs = obs_type([game_map], max_lives)
 
         keys = PacmanEnv.keys
 
@@ -44,7 +44,7 @@ async def agent_loop(model, obs_type, max_lives, agent_name, server_address="loc
                 print("WIN - Score: {}".format(state['score']))
                 break
 
-            obs = pacman_obs.get_obs(state)
+            obs = pacman_obs.get_obs(state, game_map)
 
             action, _states = model.predict(obs, deterministic=False)
 

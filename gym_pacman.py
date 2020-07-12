@@ -7,13 +7,15 @@ import numpy as np
 from stable_baselines.common.env_checker import check_env
 
 from game import Game, POINT_ENERGY, TIME_BONUS_STEPS
+from mapa import Map
 from gym_observations import SingleChannelObs, MultiChannelObs
 
 
 class EnvParams:
-    def __init__(self, ghosts, level):
+    def __init__(self, ghosts, level, mapa):
         self._ghosts = ghosts
         self._level = level
+        self._map = mapa
 
     @property
     def ghosts(self):
@@ -23,8 +25,19 @@ class EnvParams:
     def level(self):
         return self._level
 
+    @property
+    def map(self):
+        return self._map
 
-ENV_PARAMS = [EnvParams(1, 1), EnvParams(2, 2), EnvParams(4, 0), EnvParams(4, 1), EnvParams(4, 2)]
+
+ENV_PARAMS = [
+    EnvParams(1, 1, 'data/map1.bmp'), EnvParams(2, 2, 'data/map1.bmp'),
+    EnvParams(4, 0, 'data/map1.bmp'), EnvParams(4, 1, 'data/map1.bmp'),
+    EnvParams(4, 2, 'data/map1.bmp'),
+    EnvParams(1, 1, 'data/map2.bmp'), EnvParams(2, 1, 'data/map2.bmp'),
+    EnvParams(4, 0, 'data/map2.bmp'), EnvParams(4, 1, 'data/map2.bmp'),
+    EnvParams(4, 2, 'data/map2.bmp')
+]
 
 
 class PacmanEnv(gym.Env):
@@ -52,7 +65,11 @@ class PacmanEnv(gym.Env):
 
         self._game = Game(mapfile, ghosts, level_ghosts, lives, timeout)
 
-        self._pacman_obs = obs_type(self._game.map, lives)
+        maps_list = []
+        for mapa in {param.map for param in ENV_PARAMS}:
+            maps_list.append(Map(mapa))
+
+        self._pacman_obs = obs_type(maps_list, lives)
 
         self.observation_space = self._pacman_obs.space
 
@@ -64,7 +81,7 @@ class PacmanEnv(gym.Env):
 
         self._last_pos = None
 
-        self._current_params = EnvParams(ghosts, level_ghosts)
+        self._current_params = EnvParams(ghosts, level_ghosts, mapfile)
 
         self.idle_steps = 0
 
@@ -91,6 +108,7 @@ class PacmanEnv(gym.Env):
         info = {k: game_state[k] for k in self.info_keywords if k in game_state}
         info['ghosts'] = self._current_params.ghosts
         info['level'] = self._current_params.level
+        info['map'] = self._current_params.map
         info['win'] = 0
         info['d'] = self.difficulty
 
@@ -145,7 +163,7 @@ class PacmanEnv(gym.Env):
         #     if info['ghosts'] == self.difficulty:
         #         self.wins_count += info['win']
 
-        return self._pacman_obs.get_obs(game_state), reward, done, info
+        return self._pacman_obs.get_obs(game_state, self._game.map), reward, done, info
 
     def reset(self):
         self._current_score = 0
@@ -179,12 +197,13 @@ class PacmanEnv(gym.Env):
         self._game.compute_next_frame()
         self.current_lives = self._game._initial_lives
         game_state = json.loads(self._game.state)
-        return self._pacman_obs.get_obs(game_state)
+        return self._pacman_obs.get_obs(game_state, self._game.map)
 
     def set_env_params(self, env_params):
         self._current_params = env_params
         self._game._n_ghosts = env_params.ghosts
         self._game._l_ghosts = env_params.level
+        self._game.map = Map(env_params.map)
 
     def render(self, mode='human'):
         self._pacman_obs.render()

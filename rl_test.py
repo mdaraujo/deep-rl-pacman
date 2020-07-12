@@ -20,7 +20,7 @@ def main():
                         help="Model file name (default: best_model)")
     parser.add_argument("-e", "--eval_episodes", type=int, default=100,
                         help="Number of evaluation episodes. (default: 100)")
-    parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
+    parser.add_argument("--map", help="path to the map bmp", default=None)
     parser.add_argument("--ghosts", help="Maximum number of ghosts", type=int, default=None)
     parser.add_argument("--level", help="difficulty level of ghosts", choices=['0', '1', '2', '3'], default=None)
     parser.add_argument("--lives", help="Number of lives", type=int, default=3)
@@ -55,6 +55,7 @@ def main():
 
     n_ghosts = params['ghosts']
     ghosts_level = params['level']
+    mapfile = params['map']
     fixed_params = False
 
     if args.ghosts is not None:
@@ -65,8 +66,12 @@ def main():
         ghosts_level = int(args.level)
         fixed_params = True
 
+    if args.map is not None:
+        mapfile = args.map
+        fixed_params = True
+
     env = PacmanEnv(obs_type, params['positive_rewards'], params['agent_name'],
-                    args.map, n_ghosts, ghosts_level, args.lives, args.timeout,
+                    mapfile, n_ghosts, ghosts_level, args.lives, args.timeout,
                     fixed_params=True)
 
     eval_start_time = time.time()
@@ -94,11 +99,13 @@ def main():
              np.mean(ghosts), np.mean(levels), n_wins,
              eval_elapsed_time, args.eval_episodes]]
 
-    if args.ghosts is not None or args.level is not None:
+    if args.ghosts is not None or args.level is not None or args.map is not None:
         header.append('NGhosts')
         rows[0].append(n_ghosts)
         header.append('Level')
         rows[0].append(ghosts_level)
+        header.append('Map')
+        rows[0].append(mapfile)
 
     write_rows(os.path.join(log_dir, 'test_evaluations.csv'), rows, header, mode='a')
 
