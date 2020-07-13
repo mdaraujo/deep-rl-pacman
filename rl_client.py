@@ -99,7 +99,7 @@ def main():
     # Dummy env to force model loading with predict function
     env = PacmanEnv(obs_type, params['positive_rewards'], params['agent_name'],
                     params['map'], params['ghosts'], params['level'], params['lives'],
-                    params['timeout'], fixed_params=True)
+                    params['timeout'], training=False)
 
     model.predict(env.reset())
 

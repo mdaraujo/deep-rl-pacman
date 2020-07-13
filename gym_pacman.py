@@ -55,21 +55,25 @@ class PacmanEnv(gym.Env):
     MIN_WINS = 200
 
     def __init__(self, obs_type, positive_rewards, agent_name, mapfile,
-                 ghosts, level_ghosts, lives, timeout, fixed_params=False):
+                 ghosts, level_ghosts, lives, timeout, map_files=None, training=True):
 
         self.positive_rewards = positive_rewards
 
         self.agent_name = agent_name
 
-        self.fixed_params = fixed_params
+        self.training = training
 
         self._game = Game(mapfile, ghosts, level_ghosts, lives, timeout)
 
-        maps_list = []
-        for mapa in {param.map for param in ENV_PARAMS}:
-            maps_list.append(Map(mapa))
+        maps = []
+        if not map_files:
+            for mapfile in {param.map for param in ENV_PARAMS}:
+                maps.append(Map(mapfile))
+        else:
+            for mapfile in map_files:
+                maps.append(Map(mapfile))
 
-        self._pacman_obs = obs_type(maps_list, lives)
+        self._pacman_obs = obs_type(maps, lives)
 
         self.observation_space = self._pacman_obs.space
 
@@ -171,7 +175,7 @@ class PacmanEnv(gym.Env):
         self.idle_steps = 0
         self._current_energy_reward = self.MIN_ENERGY_REWARD
 
-        if not self.fixed_params:
+        if self.training:
 
             self._current_params = random.choice(ENV_PARAMS)
 

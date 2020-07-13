@@ -124,7 +124,7 @@ if __name__ == "__main__":
 
     eval_env = PacmanEnv(obs_type, args.positive_rewards, agent_name, args.map,
                          args.ghosts, int(args.level), args.lives, args.timeout,
-                         fixed_params=True)
+                         training=False)
 
     eval_callback = PlotEvalSaveCallback(eval_env, n_eval_episodes=args.eval_episodes,
                                          eval_freq=eval_freq,
