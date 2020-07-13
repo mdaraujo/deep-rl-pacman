@@ -12,7 +12,7 @@ from gym_observations import SingleChannelObs, MultiChannelObs
 from rl_utils.utils import get_alg, filter_tf_warnings
 
 
-async def agent_loop(model, obs_type, max_lives, agent_name, server_address="localhost:8000"):
+async def agent_loop(model, pacman_obs, agent_name, server_address="localhost:8000"):
     async with websockets.connect("ws://{}/player".format(server_address)) as websocket:
 
         # Receive information about static game properties
@@ -24,8 +24,6 @@ async def agent_loop(model, obs_type, max_lives, agent_name, server_address="loc
         game_properties = json.loads(msg)
 
         game_map = Map(game_properties['map'])
-
-        pacman_obs = obs_type([game_map], max_lives)
 
         keys = PacmanEnv.keys
 
@@ -96,11 +94,11 @@ def main():
 
     model = alg.load(os.path.join(log_dir, args.model_name))
 
-    # Dummy env to force model loading with predict function
     env = PacmanEnv(obs_type, params['positive_rewards'], params['agent_name'],
                     params['map'], params['ghosts'], params['level'], params['lives'],
                     params['timeout'], training=False)
 
+    # Force model loading with first predict call
     model.predict(env.reset())
 
     loop = asyncio.get_event_loop()
@@ -109,7 +107,7 @@ def main():
     PORT = os.environ.get('PORT', '8000')
 
     loop.run_until_complete(agent_loop(
-        model, obs_type, params['lives'], params['agent_name'], "{}:{}".format(SERVER, PORT)))
+        model, env.pacman_obs, params['agent_name'], "{}:{}".format(SERVER, PORT)))
 
 
 if __name__ == "__main__":
