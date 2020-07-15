@@ -55,8 +55,7 @@ def main():
 
     n_ghosts = params['ghosts']
     ghosts_level = params['level']
-    mapfile = params['map']
-    map_files = None
+    map_files = params['map_files']
     fixed_params = False
 
     if args.ghosts is not None:
@@ -70,10 +69,9 @@ def main():
     if args.map is not None:
         mapfile = args.map
         fixed_params = True
-        map_files = [mapfile]
 
     env = PacmanEnv(obs_type, params['positive_rewards'], params['agent_name'],
-                    mapfile, n_ghosts, ghosts_level, args.lives, args.timeout,
+                    n_ghosts, ghosts_level, args.lives, args.timeout,
                     map_files=map_files, training=False)
 
     eval_start_time = time.time()

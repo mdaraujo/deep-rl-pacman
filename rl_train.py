@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 from stable_baselines.bench import Monitor
 
-from gym_pacman import PacmanEnv
+from gym_pacman import PacmanEnv, ENV_PARAMS
 from gym_observations import SingleChannelObs, MultiChannelObs
 from rl_utils.utils import get_alg, filter_tf_warnings, human_format
 from rl_utils.callbacks import PlotEvalSaveCallback
@@ -84,6 +84,11 @@ if __name__ == "__main__":
 
     print("\nLog dir:", log_dir)
 
+    map_files = []
+
+    for mf in {param.map for param in ENV_PARAMS}:
+        map_files.append(mf)
+
     params = OrderedDict()
     params['agent_name'] = agent_name
     params['alg'] = alg_name
@@ -93,7 +98,7 @@ if __name__ == "__main__":
     params['obs_type'] = obs_type.__name__
     params['positive_rewards'] = args.positive_rewards
     params['gamma'] = args.gamma
-    params['map'] = args.map
+    params['map_files'] = map_files
     params['ghosts'] = args.ghosts
     params['level'] = int(args.level)
     params['lives'] = args.lives
@@ -103,7 +108,7 @@ if __name__ == "__main__":
     with open(os.path.join(log_dir, "params.json"), "w") as f:
         json.dump(params, f, indent=4)
 
-    env = PacmanEnv(obs_type, args.positive_rewards, agent_name, args.map,
+    env = PacmanEnv(obs_type, args.positive_rewards, agent_name,
                     args.ghosts, int(args.level), args.lives, args.timeout)
     env = Monitor(env, filename=log_dir, info_keywords=('score', 'ghosts', 'level', 'win', 'd', 'map'))
 
@@ -122,7 +127,7 @@ if __name__ == "__main__":
         # model = alg("CnnPolicy", env, policy_kwargs=policy_kwargs, ent_coef=0.0, learning_rate=3e-4,
         #             gamma=args.gamma, tensorboard_log=args.tensorboard, verbose=0)
 
-    eval_env = PacmanEnv(obs_type, args.positive_rewards, agent_name, args.map,
+    eval_env = PacmanEnv(obs_type, args.positive_rewards, agent_name,
                          args.ghosts, int(args.level), args.lives, args.timeout,
                          training=False)
 

@@ -95,7 +95,7 @@ def main():
     model = alg.load(os.path.join(log_dir, args.model_name))
 
     env = PacmanEnv(obs_type, params['positive_rewards'], params['agent_name'],
-                    params['map'], params['ghosts'], params['level'], params['lives'],
+                    params['ghosts'], params['level'], params['lives'],
                     params['timeout'], training=False)
 
     # Force model loading with first predict call

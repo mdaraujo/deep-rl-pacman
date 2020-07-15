@@ -54,7 +54,7 @@ class PacmanEnv(gym.Env):
     INITIAL_DIFFICULTY = 0
     MIN_WINS = 200
 
-    def __init__(self, obs_type, positive_rewards, agent_name, mapfile,
+    def __init__(self, obs_type, positive_rewards, agent_name,
                  ghosts, level_ghosts, lives, timeout, map_files=None, training=True):
 
         self.positive_rewards = positive_rewards
@@ -63,8 +63,6 @@ class PacmanEnv(gym.Env):
 
         self.training = training
 
-        self._game = Game(mapfile, ghosts, level_ghosts, lives, timeout)
-
         maps = []
         if not map_files:
             for mf in {param.map for param in ENV_PARAMS}:
@@ -72,6 +70,10 @@ class PacmanEnv(gym.Env):
         else:
             for mf in map_files:
                 maps.append(Map(mf))
+
+        mapfile = maps[0].filename
+
+        self._game = Game(mapfile, ghosts, level_ghosts, lives, timeout)
 
         self.pacman_obs = obs_type(maps, lives)
 
@@ -219,7 +221,6 @@ def main():
     """
 
     agent_name = "GymEnvTestAgent"
-    mapfile = "data/map1.bmp"
     ghosts = 4
     level_ghosts = 1
     lives = 3
@@ -229,7 +230,7 @@ def main():
 
     positive_rewards = True
 
-    env = PacmanEnv(obs_type, positive_rewards, agent_name, mapfile, ghosts, level_ghosts, lives, timeout)
+    env = PacmanEnv(obs_type, positive_rewards, agent_name, ghosts, level_ghosts, lives, timeout)
     print("Checking environment...")
     check_env(env, warn=True)
 
