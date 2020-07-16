@@ -67,7 +67,7 @@ def main():
         fixed_params = True
 
     if args.map is not None:
-        mapfile = args.map
+        map_files = [args.map] + map_files
         fixed_params = True
 
     env = PacmanEnv(obs_type, params['positive_rewards'], params['agent_name'],
@@ -105,7 +105,7 @@ def main():
         header.append('Level')
         rows[0].append(ghosts_level)
         header.append('Map')
-        rows[0].append(mapfile)
+        rows[0].append(map_files[0])
 
     write_rows(os.path.join(log_dir, 'test_evaluations.csv'), rows, header, mode='a')
 
