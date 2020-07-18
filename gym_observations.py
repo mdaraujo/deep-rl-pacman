@@ -23,17 +23,34 @@ class PacmanObservation(ABC):
         for y in range(self.height):
             for x in range(self.width):
                 for mapa in maps_list:
+                    if x >= mapa.hor_tiles or y >= mapa.ver_tiles:
+                        continue
                     if mapa.is_wall((x, y)):
                         if mapa.filename in self.walls:
                             self.walls[mapa.filename].append((x, y))
                         else:
                             self.walls[mapa.filename] = [(x, y)]
 
-    def _new_x(self, x):
-        return ((x - self.pac_x) + self.center_x) % self.width
+    def _new_points(self, x, y, mapa):
+        new_points = []
+        x = ((x - self.pac_x) + self.center_x) % mapa.hor_tiles
+        y = ((y - self.pac_y) + self.center_y) % mapa.ver_tiles
+        new_points.append((x, y))
 
-    def _new_y(self, y):
-        return ((y - self.pac_y) + self.center_y) % self.height
+        new_x = None
+        new_y = None
+        if x + mapa.hor_tiles < self.width:
+            new_x = x + mapa.hor_tiles
+            new_points.append((new_x, y))
+
+        if y + mapa.ver_tiles < self.height:
+            new_y = y + mapa.ver_tiles
+            new_points.append((x, new_y))
+
+        if new_x is not None and new_y is not None:
+            new_points.append((new_x, new_y))
+
+        return new_points
 
     @property
     def space(self):
@@ -74,7 +91,7 @@ class MultiChannelObs(PacmanObservation):
 
     def get_obs(self, game_state, mapa):
 
-        self.center_x, self.center_y = int(mapa.hor_tiles / 2), int(mapa.ver_tiles / 2)
+        self.center_x, self.center_y = int(self.width / 2), int(self.height / 2)
 
         # Reset channels
         self._obs[self.EMPTY_CH][...] = self.PIXEL_IN
@@ -88,28 +105,28 @@ class MultiChannelObs(PacmanObservation):
         self.pac_x, self.pac_y = game_state['pacman']
 
         for x, y in self.walls[mapa.filename]:
-            x, y = self._new_x(x), self._new_y(y)
-            self._obs[self.WALL_CH][y][x] = self.PIXEL_IN
-            self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
+            for x, y in self._new_points(x, y, mapa):
+                self._obs[self.WALL_CH][y][x] = self.PIXEL_IN
+                self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
 
         for x, y in game_state['energy']:
-            x, y = self._new_x(x), self._new_y(y)
-            self._obs[self.ENERGY_CH][y][x] = self.ENERGY_IN
-            self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
+            for x, y in self._new_points(x, y, mapa):
+                self._obs[self.ENERGY_CH][y][x] = self.ENERGY_IN
+                self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
 
         for x, y in game_state['boost']:
-            x, y = self._new_x(x), self._new_y(y)
-            self._obs[self.ENERGY_CH][y][x] = self.BOOST_IN
-            self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
+            for x, y in self._new_points(x, y, mapa):
+                self._obs[self.ENERGY_CH][y][x] = self.BOOST_IN
+                self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
 
         for ghost in game_state['ghosts']:
             x, y = ghost[0]
-            x, y = self._new_x(x), self._new_y(y)
 
-            if ghost[1]:
-                self._obs[self.ZOMBIE_CH][y][x] = self.PIXEL_IN
-            else:
-                self._obs[self.GHOST_CH][y][x] = self.PIXEL_IN
+            for x, y in self._new_points(x, y, mapa):
+                if ghost[1]:
+                    self._obs[self.ZOMBIE_CH][y][x] = self.PIXEL_IN
+                else:
+                    self._obs[self.GHOST_CH][y][x] = self.PIXEL_IN
 
             self._obs[self.EMPTY_CH][y][x] = self.PIXEL_EMPTY
 
@@ -171,25 +188,25 @@ class SingleChannelObs(PacmanObservation):
         self.pac_x, self.pac_y = game_state['pacman']
 
         for x, y in self.walls[mapa.filename]:
-            x, y = self._new_x(x), self._new_y(y)
-            self._obs[0][y][x] = self.WALL
+            for x, y in self._new_points(x, y, mapa):
+                self._obs[0][y][x] = self.WALL
 
         for x, y in game_state['energy']:
-            x, y = self._new_x(x), self._new_y(y)
-            self._obs[0][y][x] = self.ENERGY
+            for x, y in self._new_points(x, y, mapa):
+                self._obs[0][y][x] = self.ENERGY
 
         for x, y in game_state['boost']:
-            x, y = self._new_x(x), self._new_y(y)
-            self._obs[0][y][x] = self.BOOST
+            for x, y in self._new_points(x, y, mapa):
+                self._obs[0][y][x] = self.BOOST
 
         for ghost in game_state['ghosts']:
             x, y = ghost[0]
-            x, y = self._new_x(x), self._new_y(y)
+            for x, y in self._new_points(x, y, mapa):
 
-            if ghost[1]:
-                self._obs[0][y][x] = self.GHOST_ZOMBIE
-            else:
-                self._obs[0][y][x] = self.GHOST
+                if ghost[1]:
+                    self._obs[0][y][x] = self.GHOST_ZOMBIE
+                else:
+                    self._obs[0][y][x] = self.GHOST
 
         return self._obs
 
