@@ -12,10 +12,11 @@ from gym_observations import SingleChannelObs, MultiChannelObs
 
 
 class EnvParams:
-    def __init__(self, ghosts, level, mapa):
+    def __init__(self, ghosts, level, mapa, test_runs):
         self._ghosts = ghosts
         self._level = level
         self._map = mapa
+        self._test_runs = test_runs
 
     @property
     def ghosts(self):
@@ -29,14 +30,22 @@ class EnvParams:
     def map(self):
         return self._map
 
+    @property
+    def test_runs(self):
+        return self._test_runs
+
 
 ENV_PARAMS = [
-    EnvParams(1, 1, 'data/map1.bmp'), EnvParams(2, 2, 'data/map1.bmp'),
-    EnvParams(4, 0, 'data/map1.bmp'), EnvParams(4, 1, 'data/map1.bmp'),
-    EnvParams(4, 2, 'data/map1.bmp'),
-    EnvParams(1, 1, 'data/map2.bmp'), EnvParams(2, 1, 'data/map2.bmp'),
-    EnvParams(4, 0, 'data/map2.bmp'), EnvParams(4, 1, 'data/map2.bmp'),
-    EnvParams(4, 2, 'data/map2.bmp')
+    EnvParams(0, 1, 'data/map1.bmp', 1), EnvParams(1, 1, 'data/map1.bmp', 10),
+    EnvParams(2, 2, 'data/map1.bmp', 10), EnvParams(4, 0, 'data/map1.bmp', 10),
+    EnvParams(4, 1, 'data/map1.bmp', 11), EnvParams(4, 2, 'data/map1.bmp', 9),
+    EnvParams(1, 1, 'data/map2.bmp', 10), EnvParams(2, 1, 'data/map2.bmp', 12),
+    EnvParams(4, 0, 'data/map2.bmp', 12), EnvParams(4, 1, 'data/map2.bmp', 10),
+    EnvParams(4, 2, 'data/map2.bmp', 10),
+    # EnvParams(1, 1, 'data/map1_1.bmp'), EnvParams(2, 1, 'data/map1_2.bmp'),
+    # EnvParams(4, 0, 'data/map1_3.bmp'), EnvParams(4, 1, 'data/map1_4.bmp'),
+    # EnvParams(4, 2, 'data/map1_5.bmp'), EnvParams(4, 2, 'data/map1_6.bmp'),
+    # EnvParams(4, 2, 'data/map1_7.bmp')
 ]
 
 
@@ -63,6 +72,8 @@ class PacmanEnv(gym.Env):
 
         self.training = training
 
+        self.train_env_params = [p for p in ENV_PARAMS if p.test_runs > 1]
+
         maps = []
         if not map_files:
             for mf in {param.map for param in ENV_PARAMS}:
@@ -87,7 +98,7 @@ class PacmanEnv(gym.Env):
 
         self._last_pos = None
 
-        self._current_params = EnvParams(ghosts, level_ghosts, mapfile)
+        self._current_params = EnvParams(ghosts, level_ghosts, mapfile, 10)
 
         self.idle_steps = 0
 
@@ -179,7 +190,7 @@ class PacmanEnv(gym.Env):
 
         if self.training:
 
-            self._current_params = random.choice(ENV_PARAMS)
+            self._current_params = random.choice(self.train_env_params)
 
             self.set_env_params(self._current_params)
 
@@ -230,7 +241,8 @@ def main():
 
     positive_rewards = True
 
-    env = PacmanEnv(obs_type, positive_rewards, agent_name, ghosts, level_ghosts, lives, timeout)
+    env = PacmanEnv(obs_type, positive_rewards, agent_name, ghosts, level_ghosts, lives, timeout, training=False)
+    env.set_env_params(EnvParams(1, 1, 'data/map2.bmp', 10))
     print("Checking environment...")
     check_env(env, warn=True)
 

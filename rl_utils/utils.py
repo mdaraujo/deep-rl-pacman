@@ -14,8 +14,9 @@ from gym_pacman import ENV_PARAMS
 EVAL_HEADER = ["TrainStep", "MeanScore", "StdScore", "MaxScore", "MinScore",
                "MeanReturn", "StdReturn", "MaxReturn", "MinReturn",
                "MeanLength", "StdLength", "MaxLength", "MinLength",
+               "Wins", "EvalEpisodes",
                "EvalIdleStepsMean", "EvalIdleEps",
-               "EvalGhostsMean", "EvalLevelMean", "Wins", "EvaluationTime",
+               "EvalGhostsMean", "EvalLevelMean", "EvalTime",
                "TrainGhostsMean", "TrainLevelMean"]
 
 
@@ -29,27 +30,31 @@ def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, fixed_pa
     if isinstance(env, VecEnv):
         assert env.num_envs == 1, "You must pass only one environment when using this function"
 
-    change_params_ep = n_eval_episodes
-
-    if ENV_PARAMS:
-        change_params_ep /= len(ENV_PARAMS)
-
-    params_idx = 0
-    count = 0
-
     returns, lengths, scores, idle_steps, ghosts, levels = [], [], [], [], [], []
 
     n_wins = 0
+    params_idx = 0
+    curr_params_count = 0
+    total_count = 0
 
-    for _ in range(n_eval_episodes):
+    if not fixed_params:
+        env.set_env_params(ENV_PARAMS[params_idx])
+
+    while True:
 
         if not fixed_params:
 
-            if count >= change_params_ep:
-                count = 0
+            if curr_params_count >= ENV_PARAMS[params_idx].test_runs:
+                curr_params_count = 0
                 params_idx += 1
 
+                if params_idx >= len(ENV_PARAMS):
+                    break
+
             env.set_env_params(ENV_PARAMS[params_idx])
+
+        elif total_count >= n_eval_episodes:
+            break
 
         obs = env.reset()
         done, state = False, None
@@ -69,9 +74,10 @@ def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, fixed_pa
         levels.append(info['level'])
         idle_steps.append(info['idle'])
         n_wins += info['win']
-        count += 1
+        curr_params_count += 1
+        total_count += 1
 
-    return returns, lengths, scores, idle_steps, ghosts, levels, n_wins
+    return returns, lengths, scores, idle_steps, ghosts, levels, n_wins, total_count
 
 
 def get_results_columns(results):
