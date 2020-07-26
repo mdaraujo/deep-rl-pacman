@@ -181,7 +181,7 @@ class SingleChannelObs(PacmanObservation):
 
     def get_obs(self, game_state, mapa):
 
-        self.center_x, self.center_y = int(mapa.hor_tiles / 2), int(mapa.ver_tiles / 2)
+        self.center_x, self.center_y = int(self.width / 2), int(self.height / 2)
 
         self._obs[0][...] = self.EMPTY
 
