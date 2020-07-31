@@ -33,30 +33,32 @@ class PacmanObservation(ABC):
 
     def _new_points(self, x, y, mapa):
         new_points = []
-        new_x = ((x - self.pac_x) + self.center_x) % self.width
-        new_y = ((y - self.pac_y) + self.center_y) % self.height
+        new_x = ((x - self.pac_x) + self.center_x) % mapa.hor_tiles
+        new_y = ((y - self.pac_y) + self.center_y) % mapa.ver_tiles
         new_points.append((new_x, new_y))
 
-        if y == mapa.ver_tiles - 1 and mapa.ver_tiles < self.height:
-            for i in range(self.height - mapa.ver_tiles + 1):
-                new_points.append((new_x, (new_y + i) % self.height))
+        # if y == mapa.ver_tiles - 1 and mapa.ver_tiles < self.height:
+        #     for i in range(self.height - mapa.ver_tiles + 1):
+        #         new_points.append((new_x, (new_y + i) % self.height))
 
-        if x == mapa.hor_tiles - 1 and mapa.hor_tiles < self.width:
-            for i in range(self.width - mapa.hor_tiles + 1):
-                new_points.append(((new_x + i) % self.width, new_y))
+        # if x == mapa.hor_tiles - 1 and mapa.hor_tiles < self.width:
+        #     for i in range(self.width - mapa.hor_tiles + 1):
+        #         new_points.append(((new_x + i) % self.width, new_y))
 
-        # new_x = None
-        # new_y = None
-        # if x + mapa.hor_tiles < self.width:
-        #     new_x = x + mapa.hor_tiles
-        #     new_points.append((new_x, y))
+        x = new_x
+        y = new_y
+        new_x = None
+        new_y = None
+        if x + mapa.hor_tiles < self.width:
+            new_x = x + mapa.hor_tiles
+            new_points.append((new_x, y))
 
-        # if y + mapa.ver_tiles < self.height:
-        #     new_y = y + mapa.ver_tiles
-        #     new_points.append((x, new_y))
+        if y + mapa.ver_tiles < self.height:
+            new_y = y + mapa.ver_tiles
+            new_points.append((x, new_y))
 
-        # if new_x is not None and new_y is not None:
-        #     new_points.append((new_x, new_y))
+        if new_x is not None and new_y is not None:
+            new_points.append((new_x, new_y))
 
         return new_points
 
