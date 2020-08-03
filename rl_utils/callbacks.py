@@ -17,10 +17,9 @@ class PlotEvalSaveCallback(BaseCallback):
     Callback for evaluating the agent during training and saving the best and the last model.
     """
 
-    def __init__(self, eval_env, n_eval_episodes, eval_freq, log_dir, deterministic):
+    def __init__(self, eval_env, eval_freq, log_dir, deterministic):
         super().__init__(verbose=0)
         self.eval_env = eval_env
-        self.n_eval_episodes = n_eval_episodes
         self.eval_freq = eval_freq
         self.deterministic = deterministic
         self.log_dir = log_dir
@@ -67,9 +66,8 @@ class PlotEvalSaveCallback(BaseCallback):
 
         returns, lengths, scores, idle_steps, ghosts, levels, n_wins, eval_eps = evaluate_policy(self.model,
                                                                                                  self.eval_env,
-                                                                                                 self.n_eval_episodes,
-                                                                                                 self.deterministic,
-                                                                                                 render=False)
+                                                                                                 10,  # not used
+                                                                                                 self.deterministic)
 
         eval_elapsed_time = get_formated_time(time.time() - eval_start_time)
 
@@ -124,17 +122,17 @@ class PlotEvalSaveCallback(BaseCallback):
 
         plot_error_bar(self.train_steps, mean_scores, std_scores, max_scores, min_scores,
                        'Evaluations Mean Score on {} Episodes | Best: {:.1f}'.format(
-                           self.n_eval_episodes, self.best_mean_score),
+                           eval_eps, self.best_mean_score),
                        'Training Step', 'Evaluation Mean Score',
                        os.path.join(self.log_dir, 'eval_scores.png'))
 
         plot_error_bar(self.train_steps, mean_returns, std_returns, max_returns, min_returns,
-                       'Evaluations Mean Return on {} Episodes'.format(self.n_eval_episodes),
+                       'Evaluations Mean Return on {} Episodes'.format(eval_eps),
                        'Training Step', 'Evaluation Mean Return',
                        os.path.join(self.log_dir, 'eval_returns.png'))
 
         plot_error_bar(self.train_steps, mean_lengths, std_lengths, max_lengths, min_lengths,
-                       'Evaluations Mean Length on {} Episodes'.format(self.n_eval_episodes),
+                       'Evaluations Mean Length on {} Episodes'.format(eval_eps),
                        'Training Step', 'Evaluation Mean Length',
                        os.path.join(self.log_dir, 'eval_lengths.png'))
 
