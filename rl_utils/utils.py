@@ -6,7 +6,8 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 from stable_baselines import PPO2, DQN
-from stable_baselines.common.vec_env import VecEnv
+from stable_baselines.common.vec_env import VecEnv, DummyVecEnv
+from stable_baselines.bench import Monitor
 
 from gym_pacman import ENV_PARAMS
 
@@ -78,6 +79,59 @@ def evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, fixed_pa
         total_count += 1
 
     return returns, lengths, scores, idle_steps, ghosts, levels, n_wins, total_count
+
+
+def make_vec_env(pacman_env, n_envs=1, seed=None, start_index=0,
+                 monitor_dir=None, wrapper_class=None,
+                 env_kwargs=None, vec_env_cls=None, vec_env_kwargs=None):
+    """
+    Create a wrapped, monitored `VecEnv`.
+    By default it uses a `DummyVecEnv` which is usually faster
+    than a `SubprocVecEnv`.
+
+    :param env_id: (str or Type[gym.Env]) the environment ID or the environment class
+    :param n_envs: (int) the number of environments you wish to have in parallel
+    :param seed: (int) the initial seed for the random number generator
+    :param start_index: (int) start rank index
+    :param monitor_dir: (str) Path to a folder where the monitor files will be saved.
+        If None, no file will be written, however, the env will still be wrapped
+        in a Monitor wrapper to provide additional information about training.
+    :param wrapper_class: (gym.Wrapper or callable) Additional wrapper to use on the environment.
+        This can also be a function with single argument that wraps the environment in many things.
+    :param env_kwargs: (dict) Optional keyword argument to pass to the env constructor
+    :param vec_env_cls: (Type[VecEnv]) A custom `VecEnv` class constructor. Default: None.
+    :param vec_env_kwargs: (dict) Keyword arguments to pass to the `VecEnv` class constructor.
+    :return: (VecEnv) The wrapped environment
+    """
+    env_kwargs = {} if env_kwargs is None else env_kwargs
+    vec_env_kwargs = {} if vec_env_kwargs is None else vec_env_kwargs
+
+    def make_env(rank):
+        def _init():
+            env = pacman_env
+
+            if seed is not None:
+                env.seed(seed + rank)
+                env.action_space.seed(seed + rank)
+            # Wrap the env in a Monitor wrapper
+            # to have additional training information
+            monitor_path = os.path.join(monitor_dir, str(rank)) if monitor_dir is not None else None
+            # Create the monitor folder if needed
+            if monitor_path is not None:
+                os.makedirs(monitor_dir, exist_ok=True)
+            env = Monitor(env, filename=monitor_path, info_keywords=('score', 'ghosts', 'level', 'win', 'd', 'map'))
+            # Optionally, wrap the environment with the provided wrapper
+            if wrapper_class is not None:
+                env = wrapper_class(env)
+            return env
+        return _init
+
+    # No custom VecEnv is passed
+    if vec_env_cls is None:
+        # Default: use a DummyVecEnv
+        vec_env_cls = DummyVecEnv
+
+    return vec_env_cls([make_env(i + start_index) for i in range(n_envs)], **vec_env_kwargs)
 
 
 def get_results_columns(results):

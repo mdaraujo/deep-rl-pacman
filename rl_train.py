@@ -8,7 +8,7 @@ from stable_baselines.bench import Monitor
 
 from gym_pacman import PacmanEnv, ENV_PARAMS
 from gym_observations import SingleChannelObs, MultiChannelObs
-from rl_utils.utils import get_alg, filter_tf_warnings, human_format
+from rl_utils.utils import get_alg, filter_tf_warnings, human_format, make_vec_env
 from rl_utils.callbacks import PlotEvalSaveCallback
 from rl_utils.cnn_extractor import pacman_cnn
 
@@ -17,14 +17,12 @@ AGENT_ID_FILE = 'agent.id'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--alg", type=str, default="DQN",
-                        help="Algorithm name. PPO or DQN (default: DQN)")
+    parser.add_argument("-a", "--alg", type=str, default="PPO",
+                        help="Algorithm name. PPO or DQN (default: PPO)")
     parser.add_argument("-t", "--timesteps", type=int, default=20000,
                         help="Total timesteps (default: 20000)")
     parser.add_argument("-f", "--eval_freq", type=int, default=None,
                         help="Number of callback calls between evaluations. (default: timesteps/10)")
-    parser.add_argument("-e", "--eval_episodes", type=int, default=100,
-                        help="Number of evaluation episodes. (default: 100)")
     parser.add_argument("-tb", "--tensorboard", default=None,
                         help="Tensorboard logdir. (default: None)")
     parser.add_argument("-s", "--single_channel_obs", action="store_true",
@@ -33,6 +31,10 @@ if __name__ == "__main__":
                         help='Use positive rewards (default: Use negative rewards)')
     parser.add_argument("-g", "--gamma", type=float, default=0.99,
                         help="Discount factor. (default: 0.99)")
+    parser.add_argument('-l', '--log_dir', type=str, default=None,
+                        help="Continue training of 'log_dir' (default: None)")
+    parser.add_argument('-m', '--model_name', type=str, default="end_model",
+                        help="Continue training of 'model_name' in 'log_dir' (default: end_model)")
     parser.add_argument("--map", help="path to the map bmp", default="data/map1.bmp")
     parser.add_argument("--ghosts", help="Maximum number of ghosts", type=int, default=4)
     parser.add_argument("--level", help="difficulty level of ghosts", choices=['0', '1', '2', '3'], default='1')
@@ -42,12 +44,53 @@ if __name__ == "__main__":
 
     now = datetime.now()
 
-    eval_freq = args.eval_freq
-
-    if not eval_freq:
-        eval_freq = int(args.timesteps / 10)
-
+    # Read Params
     alg_name = args.alg
+    timesteps = args.timesteps
+    eval_freq = args.eval_freq
+    positive_rewards = args.positive_rewards
+    gamma = args.gamma
+    ghosts = args.ghosts
+    level = int(args.level)
+    lives = args.lives
+    timeout = args.timeout
+
+    obs_type = MultiChannelObs
+
+    if args.single_channel_obs:
+        obs_type = SingleChannelObs
+
+    map_files = []
+
+    for mf in {param.map for param in ENV_PARAMS}:
+        map_files.append(mf)
+
+    previous_agent_name = ""
+
+    # Override params
+    if args.log_dir:
+        with open(os.path.join(args.log_dir, "params.json"), "r") as f:
+            params = json.load(f)
+            previous_agent_name = params['agent_name']
+            alg_name = params['alg']
+            positive_rewards = params['positive_rewards']
+            gamma = params['gamma']
+            map_files = params['map_files']
+            ghosts = params['ghosts']
+            level = params['level']
+            lives = params['lives']
+            timeout = params['timeout']
+
+            if params['obs_type'] == SingleChannelObs.__name__:
+                obs_type = SingleChannelObs
+            elif params['obs_type'] == MultiChannelObs.__name__:
+                obs_type = MultiChannelObs
+            else:
+                raise ValueError("Invalid obs_type in params.json file.")
+
+    # Process Params
+    if not eval_freq:
+        eval_freq = int(timesteps / 10)
 
     agent_id = 1
 
@@ -60,23 +103,20 @@ if __name__ == "__main__":
     with open(AGENT_ID_FILE, 'w') as f:
         f.write(str(agent_id + 1))
 
-    obs_type = MultiChannelObs
-
-    if args.single_channel_obs:
-        obs_type = SingleChannelObs
-
     rewards_str = 'Neg'
 
-    if args.positive_rewards:
+    if positive_rewards:
         rewards_str = 'Pos'
 
     base_dir = "{}_{}_{}".format(alg_name, obs_type.__name__[:4], rewards_str)
 
-    dir_name = "{}/{}_{}_{}_{}_{}".format(base_dir,
-                                          agent_id, base_dir,
-                                          human_format(args.timesteps),
-                                          args.gamma,
-                                          now.strftime('%y%m%d-%H%M%S'))
+    dir_name = "{}/{}_{}_{}_{}_{}_{}".format(base_dir,
+                                             agent_id,
+                                             previous_agent_name,
+                                             base_dir,
+                                             human_format(timesteps),
+                                             gamma,
+                                             now.strftime('%y%m%d-%H%M%S'))
 
     log_dir = os.path.join(LOGS_BASE_DIR, dir_name)
 
@@ -84,33 +124,33 @@ if __name__ == "__main__":
 
     print("\nLog dir:", log_dir)
 
-    map_files = []
-
-    for mf in {param.map for param in ENV_PARAMS}:
-        map_files.append(mf)
-
     params = OrderedDict()
     params['agent_name'] = agent_name
+    params['agent_id'] = agent_id
     params['alg'] = alg_name
-    params['timesteps'] = args.timesteps
+    params['timesteps'] = timesteps
     params['eval_freq'] = eval_freq
-    params['eval_episodes'] = args.eval_episodes
     params['obs_type'] = obs_type.__name__
-    params['positive_rewards'] = args.positive_rewards
-    params['gamma'] = args.gamma
+    params['positive_rewards'] = positive_rewards
+    params['gamma'] = gamma
     params['map_files'] = map_files
-    params['ghosts'] = args.ghosts
-    params['level'] = int(args.level)
-    params['lives'] = args.lives
-    params['timeout'] = args.timeout
+    params['ghosts'] = ghosts
+    params['level'] = level
+    params['lives'] = lives
+    params['timeout'] = timeout
     params['datetime'] = now.replace(microsecond=0).isoformat()
+    params['previous_model_dir'] = args.log_dir
+    if args.log_dir:
+        params['previous_model_name'] = args.model_name
+        params['previous_agent_name'] = previous_agent_name
 
     with open(os.path.join(log_dir, "params.json"), "w") as f:
         json.dump(params, f, indent=4)
 
-    env = PacmanEnv(obs_type, args.positive_rewards, agent_name,
-                    args.ghosts, int(args.level), args.lives, args.timeout)
-    env = Monitor(env, filename=log_dir, info_keywords=('score', 'ghosts', 'level', 'win', 'd', 'map'))
+    pacman_env = PacmanEnv(obs_type, positive_rewards, agent_name,
+                           ghosts, int(level), lives, timeout)
+
+    env = make_vec_env(pacman_env, n_envs=1, monitor_dir=log_dir)
 
     filter_tf_warnings()
 
@@ -120,20 +160,25 @@ if __name__ == "__main__":
 
     if alg_name == "DQN":
         model = alg("CnnPolicy", env, policy_kwargs=policy_kwargs, prioritized_replay=True,
-                    gamma=args.gamma, tensorboard_log=args.tensorboard, verbose=0)
+                    gamma=gamma, tensorboard_log=args.tensorboard, verbose=0)
     elif alg_name == "PPO":
         model = alg("CnnPolicy", env, policy_kwargs=policy_kwargs,
-                    gamma=args.gamma, tensorboard_log=args.tensorboard, verbose=0)
+                    gamma=gamma, tensorboard_log=args.tensorboard, verbose=0)
         # model = alg("CnnPolicy", env, policy_kwargs=policy_kwargs, ent_coef=0.0, learning_rate=3e-4,
-        #             gamma=args.gamma, tensorboard_log=args.tensorboard, verbose=0)
+        #             gamma=gamma, tensorboard_log=args.tensorboard, verbose=0)
 
-    eval_env = PacmanEnv(obs_type, args.positive_rewards, agent_name,
-                         args.ghosts, int(args.level), args.lives, args.timeout,
+    eval_env = PacmanEnv(obs_type, positive_rewards, agent_name,
+                         ghosts, int(level), lives, timeout,
                          training=False)
 
-    eval_callback = PlotEvalSaveCallback(eval_env, n_eval_episodes=args.eval_episodes,
+    eval_callback = PlotEvalSaveCallback(eval_env,
                                          eval_freq=eval_freq,
-                                         log_dir=log_dir, deterministic=False)
+                                         log_dir=log_dir,
+                                         deterministic=False)
 
     with eval_callback:
-        model.learn(total_timesteps=args.timesteps, callback=eval_callback, tb_log_name=agent_name)
+        if args.log_dir:
+            model = alg.load(os.path.join(args.log_dir, args.model_name))
+            model.set_env(env)
+
+        model.learn(total_timesteps=timesteps, callback=eval_callback, tb_log_name=agent_name)
