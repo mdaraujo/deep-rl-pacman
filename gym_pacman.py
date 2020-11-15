@@ -6,7 +6,7 @@ import numpy as np
 
 from stable_baselines.common.env_checker import check_env
 
-from game import Game, POINT_ENERGY, TIME_BONUS_STEPS
+from game import Game, POINT_ENERGY, TIME_BONUS_STEPS, POINT_BOOST
 from mapa import Map
 from gym_observations import SingleChannelObs, MultiChannelObs
 
@@ -42,10 +42,10 @@ ENV_PARAMS = [
     EnvParams(1, 1, 'data/map2.bmp', 10), EnvParams(2, 1, 'data/map2.bmp', 12),
     EnvParams(4, 0, 'data/map2.bmp', 12), EnvParams(4, 1, 'data/map2.bmp', 10),
     EnvParams(4, 2, 'data/map2.bmp', 10),
-    # EnvParams(1, 1, 'data/map1_1.bmp'), EnvParams(2, 1, 'data/map1_2.bmp'),
-    # EnvParams(4, 0, 'data/map1_3.bmp'), EnvParams(4, 1, 'data/map1_4.bmp'),
-    # EnvParams(4, 2, 'data/map1_5.bmp'), EnvParams(4, 2, 'data/map1_6.bmp'),
-    # EnvParams(4, 2, 'data/map1_7.bmp')
+    # EnvParams(1, 1, 'data/map1_1.bmp', 10), EnvParams(2, 1, 'data/map1_2.bmp', 10),
+    # EnvParams(4, 0, 'data/map1_3.bmp', 10), EnvParams(4, 1, 'data/map1_4.bmp', 10),
+    # EnvParams(4, 2, 'data/map1_5.bmp', 10), EnvParams(4, 2, 'data/map1_6.bmp', 10),
+    # EnvParams(1, 1, 'data/map1_7.bmp', 10), EnvParams(1, 1, 'data/map1_8.bmp', 10)
 ]
 
 
@@ -57,8 +57,8 @@ class PacmanEnv(gym.Env):
 
     info_keywords = ('step', 'score', 'lives')
 
-    MAX_ENERGY_REWARD = 1.5
-    MIN_ENERGY_REWARD = 0.5
+    MAX_ENERGY_REWARD = 60
+    MIN_ENERGY_REWARD = 10
 
     INITIAL_DIFFICULTY = 0
     MIN_WINS = 200
@@ -133,10 +133,13 @@ class PacmanEnv(gym.Env):
 
         reward = game_state['score'] - self._current_score
 
-        # if reward == POINT_ENERGY:
+        # if reward == POINT_BOOST:
+        #     reward = self.MAX_ENERGY_REWARD
+        # elif reward == POINT_ENERGY:
         #     reward = self._current_energy_reward
         #     self._current_energy_reward += self.energy_reward_increment
-        #     # print(self.total_energy - len(game_state['energy']), reward)
+        #     # print(self.total_energy, self.energy_reward_increment)
+        #     # print(" --- Energy ID:", self.total_energy - len(game_state['energy']), "Reward:", reward)
 
         self._current_score = game_state['score']
 
@@ -152,7 +155,7 @@ class PacmanEnv(gym.Env):
                 info['win'] = 1
 
                 if not self.positive_rewards:
-                    reward = POINT_ENERGY
+                    # reward = self._current_energy_reward
                     reward -= 1.0 / TIME_BONUS_STEPS
 
             if info['ghosts'] == self.difficulty:
@@ -213,6 +216,8 @@ class PacmanEnv(gym.Env):
         self._game.start(self.agent_name)
         self._game.compute_next_frame()
         self.current_lives = self._game._initial_lives
+        # self.total_energy = len(self._game.map.energy)
+        # self.energy_reward_increment = (self.MAX_ENERGY_REWARD - self.MIN_ENERGY_REWARD) / (self.total_energy - 1)
         game_state = json.loads(self._game.state)
         return self.pacman_obs.get_obs(game_state, self._game.map)
 
