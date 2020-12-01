@@ -3,9 +3,8 @@ import os
 import pandas as pd
 
 from stable_baselines.results_plotter import load_results, ts2xy
-from rl_utils.utils import plot_error_bar
 
-from rl_utils.utils import plot_line, plot_error_bar, moving_average, evaluate_policy, get_results_columns
+from rl_utils.utils import plot_line, plot_error_bar, moving_average
 
 
 if __name__ == "__main__":

@@ -11,6 +11,9 @@ from stable_baselines.bench import Monitor
 
 from gym_pacman import ENV_PARAMS
 
+FIG_SIZE = (8.5, 5)
+
+plt.rc('font', size=11)
 
 EVAL_HEADER = ["TrainStep", "MeanScore", "StdScore", "MaxScore", "MinScore",
                "MeanReturn", "StdReturn", "MaxReturn", "MinReturn",
@@ -139,10 +142,12 @@ def get_results_columns(results):
 
 
 def plot_error_bar(x, means, std, maxes, mins, title, x_label, y_label, outfile):
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=FIG_SIZE)
     ax.set_title(title)
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
+    # ax.set_xticks(x)
+    # ax.set_xticklabels(x)
 
     ax.plot(x, means, color='tab:blue', marker='o', label='Mean', zorder=3)
 
@@ -163,7 +168,7 @@ def plot_error_bar(x, means, std, maxes, mins, title, x_label, y_label, outfile)
 
 
 def plot_line(x, y, title, x_label, y_label, outfile):
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=FIG_SIZE)
     ax.set_title(title)
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
