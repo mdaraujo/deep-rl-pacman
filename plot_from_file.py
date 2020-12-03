@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import pandas as pd
 
@@ -12,7 +13,11 @@ if __name__ == "__main__":
     parser.add_argument("logdir", help="log directory")
     args = parser.parse_args()
 
-    # column_names = ["Letter", "Number", "Symbol"]
+    with open(os.path.join(args.logdir, "params.json"), "r") as f:
+        params = json.load(f)
+
+    agent_name = params['agent_name']
+    eval_episodes = params['eval_episodes']
 
     df = pd.read_csv(args.logdir + "evaluations.csv")
 
@@ -20,17 +25,17 @@ if __name__ == "__main__":
 
     plot_error_bar(df.TrainStep.tolist(), df.MeanReward.tolist(),
                    df.StdReward.tolist(), df.MaxReward.tolist(), df.MinReward.tolist(),
-                   'Evaluations Mean Score on {} Episodes | Best: {:.1f}'.format(
-                       30, max(df.MeanReward.tolist())),
-                   'Training Step', 'Evaluation Mean Score',
-                   os.path.join(args.logdir, 'eval_scores_new.png'))
+                   '{} Evaluations Mean Score on {} Episodes | Best: {:.1f}'.format(
+        agent_name, eval_episodes, max(df.MeanReward.tolist())),
+        'Training Step', 'Evaluation Mean Score',
+        os.path.join(args.logdir, 'eval_scores_new.png'))
 
     plot_error_bar(df.TrainStep.tolist(), df.MeanReward.tolist(),
                    df.StdReward.tolist(), df.MaxReward.tolist(), df.MinReward.tolist(),
-                   'Evaluations Mean Return on {} Episodes | Best: {:.1f}'.format(
-                       30, max(df.MeanReward.tolist())),
-                   'Training Step', 'Evaluation Mean Return',
-                   os.path.join(args.logdir, 'eval_returns_new.png'))
+                   '{} Evaluations Mean Return on {} Episodes | Best: {:.1f}'.format(
+        agent_name,  eval_episodes, max(df.MeanReward.tolist())),
+        'Training Step', 'Evaluation Mean Return',
+        os.path.join(args.logdir, 'eval_returns_new.png'))
 
     train_results = load_results(args.logdir)
 
