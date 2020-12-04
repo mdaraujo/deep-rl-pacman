@@ -149,7 +149,7 @@ def plot_error_bar(x, means, std, maxes, mins, title, x_label, y_label, outfile)
     # ax.set_xticks(x)
     # ax.set_xticklabels(x)
 
-    ax.plot(x, means, color='tab:blue', marker='o', label='Mean', zorder=3)
+    ax.plot(x, means, color='tab:blue', marker='o', label='Average', zorder=3)
 
     ax.errorbar(x, means, std, color='tab:orange',
                 fmt='|', label='Std Deviation', zorder=1)

@@ -25,17 +25,17 @@ if __name__ == "__main__":
 
     plot_error_bar(df.TrainStep.tolist(), df.MeanReward.tolist(),
                    df.StdReward.tolist(), df.MaxReward.tolist(), df.MinReward.tolist(),
-                   '{} Evaluations Mean Score on {} Episodes | Best: {:.1f}'.format(
-        agent_name, eval_episodes, max(df.MeanReward.tolist())),
-        'Training Step', 'Evaluation Mean Score',
-        os.path.join(args.logdir, 'eval_scores_new.png'))
+                   '{} Evaluations Average Score on {} Episodes | Best: {:.1f}'.format(
+                       agent_name, eval_episodes, max(df.MeanReward.tolist())),
+                   'Training Step', 'Evaluation Average Score',
+                   os.path.join(args.logdir, 'eval_scores_new.png'))
 
     plot_error_bar(df.TrainStep.tolist(), df.MeanReward.tolist(),
                    df.StdReward.tolist(), df.MaxReward.tolist(), df.MinReward.tolist(),
-                   '{} Evaluations Mean Return on {} Episodes | Best: {:.1f}'.format(
-        agent_name,  eval_episodes, max(df.MeanReward.tolist())),
-        'Training Step', 'Evaluation Mean Return',
-        os.path.join(args.logdir, 'eval_returns_new.png'))
+                   '{} Evaluations Average Return on {} Episodes | Best: {:.1f}'.format(
+                       agent_name, eval_episodes, max(df.MeanReward.tolist())),
+                   'Training Step', 'Evaluation Average Return',
+                   os.path.join(args.logdir, 'eval_returns_new.png'))
 
     train_results = load_results(args.logdir)
 
@@ -53,8 +53,8 @@ if __name__ == "__main__":
     moving_returns = moving_average(train_returns, n=moving_n)
 
     plot_line(x[moving_n-1:], moving_returns,
-              'Training Episodes Return Moving Mean | Total Episodes: {}'.format(len(train_returns)),
-              'Training Step', '{} Last Episodes Mean Return'.format(moving_n),
+              'Training Episodes Return Moving Average | Total Episodes: {}'.format(len(train_returns)),
+              'Training Step', '{} Last Episodes Average Return'.format(moving_n),
               os.path.join(args.logdir, 'train_returns_MM_new.png'))
 
     # Train scores
@@ -68,8 +68,8 @@ if __name__ == "__main__":
         moving_scores = moving_average(train_scores, n=moving_n)
 
         plot_line(x[moving_n-1:], moving_scores,
-                  'Training Episodes Score Moving Mean | Total Episodes: {}'.format(len(train_scores)),
-                  'Training Step', '{} Last Episodes Mean Score'.format(moving_n),
+                  'Training Episodes Score Moving Average | Total Episodes: {}'.format(len(train_scores)),
+                  'Training Step', '{} Last Episodes Average Score'.format(moving_n),
                   os.path.join(args.logdir, 'train_scores_MM_new.png'))
 
     # Train ghosts
@@ -83,6 +83,6 @@ if __name__ == "__main__":
         moving_ghosts = moving_average(train_ghosts, n=moving_n)
 
         plot_line(x[moving_n-1:], moving_ghosts,
-                  'Training Episodes Ghosts Moving Mean | Total Episodes: {}'.format(len(train_ghosts)),
-                  'Training Step', '{} Last Episodes Mean Ghosts'.format(moving_n),
+                  'Training Episodes Ghosts Moving Average | Total Episodes: {}'.format(len(train_ghosts)),
+                  'Training Step', '{} Last Episodes Average Ghosts'.format(moving_n),
                   os.path.join(args.logdir, 'train_ghosts_MM_new.png'))
