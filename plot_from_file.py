@@ -23,17 +23,26 @@ if __name__ == "__main__":
 
     print()
 
-    plot_error_bar(df.TrainStep.tolist(), df.MeanReward.tolist(),
-                   df.StdReward.tolist(), df.MaxReward.tolist(), df.MinReward.tolist(),
+    score_columns = ["MeanReward", "StdReward", "MaxReward", "MinReward"]
+    return_columns = score_columns
+
+    if score_columns[0] not in df:
+        score_columns = ["MeanScore", "StdScore", "MaxScore", "MinScore"]
+        return_columns = ["MeanReturn", "StdReturn", "MaxReturn", "MinReturn"]
+
+    plot_error_bar(df.TrainStep.tolist(), df[score_columns[0]].tolist(),
+                   df[score_columns[1]].tolist(), df[score_columns[2]].tolist(),
+                   df[score_columns[3]].tolist(),
                    '{} Evaluations Average Score on {} Episodes | Best: {:.1f}'.format(
-                       agent_name, eval_episodes, max(df.MeanReward.tolist())),
+                       agent_name, eval_episodes, max(df[score_columns[0]].tolist())),
                    'Training Step', 'Evaluation Average Score',
                    os.path.join(args.logdir, 'eval_scores_new.png'))
 
-    plot_error_bar(df.TrainStep.tolist(), df.MeanReward.tolist(),
-                   df.StdReward.tolist(), df.MaxReward.tolist(), df.MinReward.tolist(),
+    plot_error_bar(df.TrainStep.tolist(), df[return_columns[0]].tolist(),
+                   df[return_columns[1]].tolist(), df[return_columns[2]].tolist(),
+                   df[return_columns[3]].tolist(),
                    '{} Evaluations Average Return on {} Episodes | Best: {:.1f}'.format(
-                       agent_name, eval_episodes, max(df.MeanReward.tolist())),
+                       agent_name, eval_episodes, max(df[return_columns[0]].tolist())),
                    'Training Step', 'Evaluation Average Return',
                    os.path.join(args.logdir, 'eval_returns_new.png'))
 
