@@ -1,6 +1,8 @@
 # Deep Reinforcement Learning in Pac-Man
 
-Training Deep Reinforcement Learning agents in a custom Gym environment adapted from a Client-Server Pac-Man clone. 
+Training Deep Reinforcement Learning agents in a custom Gym environment adapted from a Client-Server Pac-Man clone.  
+
+Trained agents video: https://www.youtube.com/watch?v=xDTF0w38WR0
 
 ## Prerequisites
 
