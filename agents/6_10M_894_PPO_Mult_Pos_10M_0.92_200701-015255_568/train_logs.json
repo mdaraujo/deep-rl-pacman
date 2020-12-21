@@ -1,0 +1,10 @@
+{
+    "end_train_step": 9425920,
+    "best_train_step": 6000000,
+    "best_mean_score": 568.8,
+    "last_eval_train_step": 9000000,
+    "last_eval_mean_score": 484.9,
+    "elapsed_time": "1 day, 1:23:19",
+    "process_time": "1 day, 5:14:06",
+    "process_time_s": 105246.01
+}

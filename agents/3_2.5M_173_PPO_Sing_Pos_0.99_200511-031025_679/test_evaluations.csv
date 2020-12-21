@@ -1,0 +1,2 @@
+ModelName,MeanReward,StdReward,MaxReward,MinReward,MeanEpLength,StdEpLength,EvaluationTime,EvaluationEpisodes
+best_model, 663.8, 231.3, 872.0, 224.0, 436.0, 136.1,0:00:21,      30

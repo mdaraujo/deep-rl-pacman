@@ -1,0 +1,6 @@
+ModelName,MeanScore,StdScore,MaxScore,MinScore,MeanReturn,StdReturn,MaxReturn,MinReturn,MeanLength,StdLength,MaxLength,MinLength,EvalGhostsMean,Wins,EvaluationTime,EvaluationEpisodes
+best_model, 431.9, 117.1,     822,     207, 419.1, 118.1, 821.0, 182.2, 281.2, 104.9,     788,     114,   2.5,       2,0:00:26,      40
+best_model, 441.8, 192.4,     883,     262, 438.2, 193.7, 882.0, 248.8, 416.5, 140.6,     938,     273,   1.0,       7,0:00:37,      40,       1
+best_model, 430.8, 153.5,    1074,     289, 424.0, 155.5,1071.1, 263.8, 332.1,  85.7,     553,     158,   2.0,       2,0:00:30,      40,       2
+best_model, 447.4,  71.7,     579,     289, 433.2,  74.4, 571.6, 265.8, 254.6,  60.3,     337,     151,   3.0,       0,0:00:25,      40,       3
+best_model, 413.4, 118.5,     632,      73, 394.5, 118.7, 610.2,  66.9, 214.2,  64.9,     370,      43,   4.0,       0,0:00:22,      40,       4

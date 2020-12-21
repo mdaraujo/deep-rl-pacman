@@ -1,0 +1,19 @@
+{
+    "agent_name": "PPO_982",
+    "alg": "PPO",
+    "timesteps": 20000000,
+    "eval_freq": 2000000,
+    "eval_episodes": 100,
+    "obs_type": "MultiChannelObs",
+    "positive_rewards": true,
+    "gamma": 0.92,
+    "map_files": [
+        "data/map2.bmp",
+        "data/map1.bmp"
+    ],
+    "ghosts": 4,
+    "level": 1,
+    "lives": 3,
+    "timeout": 3000,
+    "datetime": "2020-07-20T14:59:06"
+}

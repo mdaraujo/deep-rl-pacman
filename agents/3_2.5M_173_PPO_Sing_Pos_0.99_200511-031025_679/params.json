@@ -1,0 +1,16 @@
+{
+    "agent_name": "PPO_173",
+    "alg": "PPO",
+    "timesteps": 2500000,
+    "eval_freq": 250000,
+    "eval_episodes": 30,
+    "obs_type": "SingleChannelObs",
+    "positive_rewards": true,
+    "gamma": 0.99,
+    "map": "data/map1.bmp",
+    "ghosts": 1,
+    "level": 1,
+    "lives": 3,
+    "timeout": 3000,
+    "datetime": "2020-05-11T03:10:25"
+}

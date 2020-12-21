@@ -1,0 +1,2 @@
+ModelName,MeanReward,StdReward,MaxReward,MinReward,MeanEpLength,StdEpLength,EvaluationTime,EvaluationEpisodes
+best_model,200.46666666666667,60.76552385102007,323.0,91.0,583.3333333333334,438.9855224137681,0:00:24,30

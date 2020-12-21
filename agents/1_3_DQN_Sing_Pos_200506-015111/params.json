@@ -1,0 +1,13 @@
+{
+    "agent_name": "DQN_3",
+    "alg": "DQN",
+    "timesteps": 1000000,
+    "eval_freq": 100000,
+    "eval_episodes": 30,
+    "map": "data/map1.bmp",
+    "ghosts": 1,
+    "level": 1,
+    "lives": 1,
+    "timeout": 3000,
+    "datetime": "2020-05-06T01:51:11"
+}
